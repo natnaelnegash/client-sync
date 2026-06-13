@@ -8,7 +8,8 @@ import { projects, clients, invoices, files } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { format } from "date-fns";
 
-export default async function ProjectAdminDetailPage({ params }: { params: { slug: string } }) {
+export default async function ProjectAdminDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -16,7 +17,7 @@ export default async function ProjectAdminDetailPage({ params }: { params: { slu
   const projectQuery = await db.select()
     .from(projects)
     .innerJoin(clients, eq(projects.clientId, clients.id))
-    .where(and(eq(projects.slug, params.slug), eq(projects.userId, session.user.id)));
+    .where(and(eq(projects.slug, slug), eq(projects.userId, session.user.id)));
   
   if (!projectQuery.length) notFound();
   

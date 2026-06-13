@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, ChevronRight, ChevronDown, MoreHorizontal, Mail, Phone, Building2, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { CreateProjectModal } from "../dashboard/components/CreateProjectModal";
+import { CreateClientModal } from "./components/CreateClientModal";
 
 export type ClientData = {
   id: string;
@@ -27,15 +28,12 @@ export function ClientListUI({ clients }: { clients: ClientData[] }) {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Clients</h1>
           <p className="text-sm text-slate-500">{clients.length} contacts</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-4 rounded-lg shadow-sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
+        <CreateClientModal />
       </div>
 
       {/* Toolbar */}
@@ -47,9 +45,9 @@ export function ClientListUI({ clients }: { clients: ClientData[] }) {
         />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex gap-6 items-start">
         {/* Clients List */}
-        <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-all duration-300 ${selectedClientId ? 'lg:w-[60%] xl:w-[65%]' : 'w-full'}`}>
+        <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-all duration-300 ${selectedClientId ? 'w-[60%] xl:w-[65%]' : 'w-full'}`}>
           {clients.length === 0 && (
             <div className="p-8 text-center text-slate-500">
               No clients found. Start by creating a project!
@@ -111,7 +109,7 @@ export function ClientListUI({ clients }: { clients: ClientData[] }) {
 
         {/* Right Detail Panel */}
         {selectedClient && (
-          <div className="w-full lg:w-[40%] xl:w-[35%] bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-24 shrink-0">
+          <div className="w-[40%] xl:w-[35%] bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-24 shrink-0">
             <div className="flex justify-between items-start mb-6">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-sm bg-sky-500`}>
                 {selectedClient.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}

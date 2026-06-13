@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 mb-1">Good morning, {session.user.name?.split(' ')[0] || 'there'}</h1>
           <p className="text-slate-500">Here's what's happening across your workspace.</p>

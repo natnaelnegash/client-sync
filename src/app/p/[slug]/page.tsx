@@ -1,24 +1,11 @@
 import { db } from "@/db";
-import { files, projects, clients } from "@/db/schema";
+import { files, projects, clients, deliverables, invoices } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { SignatureForm } from "./components/SignatureForm";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
-import { UploadDropzone } from "@/utils/uploadthing";
-import {
-  completeAssetCollection,
-  notifyUploadAction,
-} from "@/app/actions/project";
-import { revalidatePath } from "next/cache";
-import { Button } from "@/components/ui/button";
-import { AssetUploader } from "./components/AssetUploader";
+import { PortalHeader } from "./components/PortalHeader";
+import { Step1Signature } from "./components/Step1Signature";
+import { Step2Upload } from "./components/Step2Upload";
+import { Step3Tracker } from "./components/Step3Tracker";
 
 export default async function ClientPortalPage({
   params,
@@ -36,7 +23,8 @@ export default async function ClientPortalPage({
       status: projects.status,
       clientSignature: projects.clientSignature,
       createdAt: projects.createdAt,
-      clientName: clients.name
+      clientName: clients.name,
+      company: clients.company,
     })
     .from(projects)
     .innerJoin(clients, eq(projects.clientId, clients.id))
@@ -44,122 +32,67 @@ export default async function ClientPortalPage({
 
   if (!project) return notFound();
 
+  const projectDeliverables = await db
+    .select()
+    .from(deliverables)
+    .where(eq(deliverables.projectId, project.id));
+
+  const [projectInvoice] = await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.projectId, project.id));
+
   const uploadedFiles = await db
     .select()
     .from(files)
     .where(eq(files.projectId, project.id));
 
+  let activeStep = 1;
+  if (project.status === "COLLECTING_ASSETS") activeStep = 2;
+  if (project.status === "IN_PROGRESS" || project.status === "IN_REVIEW" || project.status === "DELIVERY" || project.status === "COMPLETED") activeStep = 3;
+
+  // Assuming agency is "Northlight Studio" for now
+  const agencyName = "Northlight Studio"; 
+
+  // Estimate start and delivery dates (dummy for demo)
+  const startDate = project.createdAt;
+  const deliveryDate = new Date(project.createdAt!.getTime() + 1000 * 60 * 60 * 24 * 50); // +50 days
+
   return (
-    <main className="min-h-screen bg-slate-50 py-12 px-4 selection:bg-blue-100">
-      <div className="max-w-2xl mx-auto space-y-8">
-        {/* Welcome Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900">
-            {project.projectName}
-          </h1>
-          <p className="text-lg text-slate-500">
-            Prepared for {project.clientName}
-          </p>
-        </div>
-
-        {/* State 1: Awaiting Signature */}
-        {project.status === "AWAITING_SIGNATURE" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-0 shadow-lg ring-1 ring-slate-200">
-              <CardHeader className="bg-slate-900 text-white rounded-t-xl px-8 py-6">
-                <CardTitle>Project Scope of Work</CardTitle>
-                <CardDescription className="text-slate-300">
-                  Please review the details below.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-8 prose prose-slate">
-                <div className="whitespace-pre-wrap text-slate-700 leading-relaxed font-medium">
-                  {project.scopeOfWork}
-                </div>
-              </CardContent>
-            </Card>
-
-            <SignatureForm slug={project.slug} />
-          </div>
+    <main className="min-h-screen bg-slate-50/50 selection:bg-indigo-100 font-sans">
+      <PortalHeader 
+        clientName={project.clientName} 
+        agencyName={agencyName} 
+        activeStep={activeStep} 
+      />
+      
+      <div className="px-4 sm:px-6 lg:px-8">
+        {activeStep === 1 && (
+          <Step1Signature
+            projectSlug={project.slug}
+            projectName={project.projectName}
+            agencyName={agencyName}
+            projectValue={projectInvoice?.amount || 0}
+            startDate={startDate}
+            deliveryDate={deliveryDate}
+            scopeOfWork={project.scopeOfWork}
+          />
         )}
 
-        {/* State 2: Assets Collection / Acknowledged Signature */}
-        {project.status !== "AWAITING_SIGNATURE" && (
-          <Card className="border-green-100 shadow-md">
-            <CardContent className="flex flex-col items-center text-center py-12 px-6 gap-4">
-              <CheckCircle2 className="h-16 w-16 text-green-500" />
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Scope Signed Successfully!
-              </h2>
-              <p className="text-slate-600">
-                Signed by{" "}
-                <strong className="text-slate-900">
-                  {project.clientSignature}
-                </strong>
-                . We are moving into the next phase.
-              </p>
-              {/* Future Phase: UploadThing integration here */}
-            </CardContent>
-          </Card>
+        {activeStep === 2 && (
+          <Step2Upload
+            projectSlug={project.slug}
+            projectId={project.id}
+          />
         )}
 
-        {project.status === "COLLECTING_ASSETS" && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-            <Card className="border-0 shadow-lg ring-1 ring-slate-200 p-8">
-              <CardHeader className="px-0 pt-0 text-center">
-                <CardTitle>Next Step: Upload Your Assets</CardTitle>
-                <CardDescription>
-                  Please upload any creative assets (videos, PDFs, images)
-                  needed to get started.
-                </CardDescription>
-              </CardHeader>
-              {/* The Upload dropzone mapped to our specific project instance */}
-              <AssetUploader
-                projectId={project.id}
-                projectSlug={project.slug}
-              />
-              {/* Display existing uploaded files sequentially mapped */}
-              {uploadedFiles.length > 0 && (
-                <div className="mt-8 space-y-3">
-                  <h3 className="font-semibold text-slate-800 border-b pb-2">
-                    Successfully Uploaded:
-                  </h3>
-                  <ul className="space-y-2">
-                    {uploadedFiles.map((f) => (
-                      <li
-                        key={f.id}
-                        className="text-sm font-medium text-slate-600 bg-slate-100 p-3 rounded-md flex justify-between"
-                      >
-                        <a
-                          href={f.fileUrl}
-                          target="_blank"
-                          className="hover:text-blue-600 transition-colors"
-                        >
-                          {f.fileName}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-            {/* A "I'm Done Uploading!" Confirmation Action */}
-            <form
-              action={async () => {
-                "use server";
-                await completeAssetCollection(project.slug);
-              }}
-            >
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full text-md font-medium"
-                disabled={uploadedFiles.length === 0}
-              >
-                I am Done Uploading files
-              </Button>
-            </form>
-          </div>
+        {activeStep === 3 && (
+          <Step3Tracker
+            projectName={project.projectName}
+            agencyName={agencyName}
+            deliverables={projectDeliverables}
+            invoice={projectInvoice}
+          />
         )}
       </div>
     </main>

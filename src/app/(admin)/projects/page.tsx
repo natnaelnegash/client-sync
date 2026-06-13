@@ -57,7 +57,7 @@ export default async function ProjectsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-1">Projects</h1>
           <p className="text-sm text-slate-500">{totalCount} total · {activeCount} active</p>
@@ -66,8 +66,8 @@ export default async function ProjectsPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-        <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
+      <div className="flex items-center justify-between gap-4 py-2">
+        <div className="flex items-center gap-4 flex-1">
           <div className="relative w-full max-w-xs shrink-0">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input 

@@ -6,6 +6,7 @@ import {
   integer,
   uuid,
   pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core"
 import type { AdapterAccountType } from "next-auth/adapters"
 
@@ -109,4 +110,37 @@ export const invoices = pgTable("invoices", {
   status: text("status").default("UNPAID").notNull(), // UNPAID, PAID
   dueDate: timestamp("due_date", { mode: "date" }),
   createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const deliverables = pgTable("deliverables", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("Pending").notNull(), // Pending, In progress..., Complete
+  fileUrl: text("file_url"), // Link to download
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const workspaceSettings = pgTable("workspace_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId").references(() => users.id).notNull().unique(),
+  
+  // White-labeling
+  agencyLogoUrl: text("agency_logo_url"),
+  agencyName: text("agency_name").default("My Agency").notNull(),
+  agencyTagline: text("agency_tagline"),
+  brandAccentColor: text("brand_accent_color").default("#10B981").notNull(),
+  
+  // Client Portal
+  customSubdomain: text("custom_subdomain").unique(),
+  showAgencyBranding: boolean("show_agency_branding").default(true).notNull(),
+  allowDownloads: boolean("allow_downloads").default(true).notNull(),
+  require2fa: boolean("require_2fa").default(true).notNull(),
+  emailNotifications: boolean("email_notifications").default(false).notNull(),
+  
+  // Payments
+  invoicePrefix: text("invoice_prefix").default("INV-").notNull(),
+  defaultPaymentTerms: text("default_payment_terms").default("Net 30").notNull(),
+  defaultInvoiceNotes: text("default_invoice_notes"),
 })

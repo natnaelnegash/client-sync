@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { projects, clients } from "@/db/schema";
+import { projects, clients, deliverables, invoices } from "@/db/schema";
 import { sendUploadNotificationEmail } from "@/lib/mail";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -29,12 +29,27 @@ export async function createProject(formData: FormData) {
     }).returning();
   }
 
-  await db.insert(projects).values({
+  const [project] = await db.insert(projects).values({
     userId,
     clientId: client.id,
     projectName,
     scopeOfWork,
     slug,
+  }).returning();
+
+  // Create mock deliverables for the demo
+  await db.insert(deliverables).values([
+    { projectId: project.id, title: "Brand Strategy Document", status: "Complete" },
+    { projectId: project.id, title: "Logo System (All Variants)", status: "In progress..." },
+    { projectId: project.id, title: "Brand Guidelines PDF", status: "In progress..." },
+    { projectId: project.id, title: "Social Media Templates", status: "Pending" },
+  ]);
+
+  // Create mock invoice
+  await db.insert(invoices).values({
+    projectId: project.id,
+    amount: 620000, // $6,200.00
+    status: "UNPAID",
   });
 
   revalidatePath("/projects");

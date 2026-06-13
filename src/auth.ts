@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verificationTokensTable: verificationTokens,
   }),
   providers: [GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: 'Ov23li3Napp2yfM6CyrR',
+      clientSecret: '833a7ffd3a3647caf7ade1dd8a474e8978eda3af',
     })],
 })

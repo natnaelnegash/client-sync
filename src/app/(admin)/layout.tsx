@@ -1,24 +1,39 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SidebarNav } from "@/components/SidebarNav";
 import { 
-  LayoutDashboard, 
-  Folder, 
-  Users, 
-  Receipt, 
-  Settings, 
   ExternalLink,
   Search,
   Moon,
   Bell,
   ChevronDown
 } from "lucide-react";
+import { db } from "@/db";
+import { projects } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  let previewUrl = "#";
+  
+  if (session?.user?.id) {
+    const latestProject = await db.select()
+      .from(projects)
+      .where(eq(projects.userId, session.user.id))
+      .orderBy(desc(projects.createdAt))
+      .limit(1);
+    
+    if (latestProject.length > 0) {
+      previewUrl = `/p/${latestProject[0].slug}`;
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       {/* Sidebar */}
@@ -35,34 +50,17 @@ export default function DashboardLayout({
             <span className="text-lg leading-none mb-0.5">+</span> New Project
           </Button>
 
-          <nav className="space-y-1">
-            <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
-              <LayoutDashboard className="w-5 h-5" />
-              Dashboard
-            </Link>
-            <Link href="/projects" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
-              <Folder className="w-5 h-5" />
-              Projects
-            </Link>
-            <Link href="/clients" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
-              <Users className="w-5 h-5" />
-              Clients
-            </Link>
-            <Link href="/invoices" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
-              <Receipt className="w-5 h-5" />
-              Invoices
-            </Link>
-            <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
-              <Settings className="w-5 h-5" />
-              Settings
-            </Link>
-          </nav>
+          <SidebarNav />
 
           <div className="mt-8 pt-8 border-t border-slate-200">
             <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-3 px-3">
               Quick Access
             </p>
-            <Link href="#" className="flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 font-medium transition-colors text-sm">
+            <Link 
+              href={previewUrl} 
+              target={previewUrl !== "#" ? "_blank" : undefined}
+              className="flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 font-medium transition-colors text-sm"
+            >
               <ExternalLink className="w-4 h-4" />
               Preview Client Portal
             </Link>
