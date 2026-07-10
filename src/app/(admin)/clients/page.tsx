@@ -4,25 +4,31 @@ import { db } from "@/db";
 import { projects, clients, invoices } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { ClientListUI, ClientData } from "./ClientListUI";
+import { getWorkspaceOwnerId } from "@/utils/workspace";
 
 export default async function ClientsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const clientsData = await db.select()
+  const ownerId = await getWorkspaceOwnerId(session.user.id, session.user.email);
+
+  const clientsData = await db
+    .select()
     .from(clients)
-    .where(eq(clients.userId, session.user.id));
+    .where(eq(clients.userId, ownerId));
   
   // Fetch projects and invoices for this user
-  const projectsData = await db.select()
+  const projectsData = await db
+    .select()
     .from(projects)
-    .where(eq(projects.userId, session.user.id))
+    .where(eq(projects.userId, ownerId))
     .orderBy(desc(projects.createdAt));
     
-  const invoicesData = await db.select()
+  const invoicesData = await db
+    .select()
     .from(invoices)
     .innerJoin(projects, eq(invoices.projectId, projects.id))
-    .where(eq(projects.userId, session.user.id));
+    .where(eq(projects.userId, ownerId));
 
   // Map into the format needed by the UI
   const formattedClients: ClientData[] = clientsData.map(c => {

@@ -7,8 +7,9 @@ import { TabSecurity } from "./components/TabSecurity";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { workspaceSettings } from "@/db/schema";
+import { workspaceSettings, teamMembers, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getWorkspaceOwnerId } from "@/utils/workspace";
 
 export default async function SettingsPage({
   searchParams,
@@ -18,6 +19,7 @@ export default async function SettingsPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const ownerId = await getWorkspaceOwnerId(session.user.id, session.user.email);
   const resolvedParams = await searchParams;
   const tab = resolvedParams.tab || "white-labeling";
 
@@ -25,9 +27,20 @@ export default async function SettingsPage({
   const settingsRecords = await db
     .select()
     .from(workspaceSettings)
-    .where(eq(workspaceSettings.userId, session.user.id));
+    .where(eq(workspaceSettings.userId, ownerId));
   
   const settings = settingsRecords.length > 0 ? settingsRecords[0] : null;
+
+  // Fetch Team Members
+  const team = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.workspaceOwnerId, ownerId));
+
+  const [owner] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, ownerId));
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -48,7 +61,7 @@ export default async function SettingsPage({
           {tab === "white-labeling" && <TabWhiteLabeling settings={settings} />}
           {tab === "client-portal" && <TabClientPortal settings={settings} />}
           {tab === "payments" && <TabPayments settings={settings} />}
-          {tab === "team" && <TabTeam />}
+          {tab === "team" && <TabTeam team={team} owner={owner} />}
           {tab === "security" && <TabSecurity />}
           {tab === "notifications" && (
             <div className="p-8 text-center text-slate-500 bg-white border border-slate-200 rounded-2xl">

@@ -92,6 +92,7 @@ export const projects = pgTable("projects", {
   scopeOfWork: text("scope_of_work").notNull(),
   status: projectStatusEnum("status").default("AWAITING_SIGNATURE").notNull(),
   clientSignature: text("client_signature"),
+  portalPin: text("portal_pin"), // 4-digit PIN
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -106,8 +107,10 @@ export const files = pgTable("files", {
 export const invoices = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id).notNull(),
+  title: text("title").default("Project Invoice").notNull(),
   amount: integer("amount").notNull(), // in cents
   status: text("status").default("UNPAID").notNull(), // UNPAID, PAID
+  checkoutSessionId: text("checkout_session_id"), // Chapa tx_ref
   dueDate: timestamp("due_date", { mode: "date" }),
   createdAt: timestamp("created_at").defaultNow(),
 })
@@ -115,10 +118,23 @@ export const invoices = pgTable("invoices", {
 export const deliverables = pgTable("deliverables", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id).notNull(),
+  invoiceId: uuid("invoice_id").references(() => invoices.id), // Link to invoice
   title: text("title").notNull(),
   description: text("description"),
   status: text("status").default("Pending").notNull(), // Pending, In progress..., Complete
-  fileUrl: text("file_url"), // Link to download
+  previewUrl: text("preview_url"), // Low-quality preview (watermarked video/image)
+  fileUrl: text("file_url"), // High-quality final deliverable
+  requiresPayment: boolean("requires_payment").default(false).notNull(),
+  clientStatus: text("client_status").default("PENDING").notNull(), // PENDING, APPROVED, REVISIONS_REQUESTED
+  clientFeedback: text("client_feedback"),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id).notNull(),
+  sender: text("sender").notNull(), // "AGENCY" | "CLIENT"
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -143,4 +159,13 @@ export const workspaceSettings = pgTable("workspace_settings", {
   invoicePrefix: text("invoice_prefix").default("INV-").notNull(),
   defaultPaymentTerms: text("default_payment_terms").default("Net 30").notNull(),
   defaultInvoiceNotes: text("default_invoice_notes"),
+})
+
+export const teamMembers = pgTable("team_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workspaceOwnerId: text("workspace_owner_id").references(() => users.id).notNull(), // The user who owns the workspace
+  email: text("email").notNull(), // Email of the invited member
+  role: text("role").default("Member").notNull(), // Owner, Admin, Member
+  status: text("status").default("Pending").notNull(), // Pending, Active
+  createdAt: timestamp("created_at").defaultNow(),
 })

@@ -8,6 +8,8 @@ import Link from "next/link";
 import { CreateProjectModal } from "../dashboard/components/CreateProjectModal";
 import { CreateClientModal } from "./components/CreateClientModal";
 
+import { EditClientModal } from "./components/EditClientModal";
+
 export type ClientData = {
   id: string;
   name: string;
@@ -114,9 +116,7 @@ export function ClientListUI({ clients }: { clients: ClientData[] }) {
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-sm bg-sky-500`}>
                 {selectedClient.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
               </div>
-              <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 rounded-full">
-                <MoreHorizontal className="w-5 h-5" />
-              </Button>
+              <EditClientModal client={selectedClient} />
             </div>
 
             <div>

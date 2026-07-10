@@ -13,6 +13,7 @@ import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { getWorkspaceOwnerId } from "@/utils/workspace";
 
 export default async function DashboardLayout({
   children,
@@ -23,9 +24,10 @@ export default async function DashboardLayout({
   let previewUrl = "#";
   
   if (session?.user?.id) {
+    const ownerId = await getWorkspaceOwnerId(session.user.id, session.user.email);
     const latestProject = await db.select()
       .from(projects)
-      .where(eq(projects.userId, session.user.id))
+      .where(eq(projects.userId, ownerId))
       .orderBy(desc(projects.createdAt))
       .limit(1);
     

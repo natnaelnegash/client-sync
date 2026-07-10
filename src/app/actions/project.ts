@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { projects, clients, deliverables, invoices } from "@/db/schema";
-import { sendUploadNotificationEmail } from "@/lib/mail";
+import { sendUploadNotificationEmail, sendProjectWelcomeEmail, sendReminderEmail } from "@/lib/mail";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { revalidatePath } from "next/cache";
@@ -17,9 +17,13 @@ export async function createProject(formData: FormData) {
   const clientName = formData.get("clientName") as string;
   const projectName = formData.get("projectName") as string;
   const scopeOfWork = formData.get("scopeOfWork") as string;
+  const projectValue = Number(formData.get("projectInvoiceAmount"));
   console.log(clientName, projectName, scopeOfWork);
 
   const slug = `${clientName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${nanoid(6)}`;
+  
+  // Generate a random 4-digit PIN
+  const portalPin = Math.floor(1000 + Math.random() * 9000).toString();
 
   let [client] = await db.select().from(clients).where(eq(clients.name, clientName));
   if (!client) {
@@ -35,6 +39,7 @@ export async function createProject(formData: FormData) {
     projectName,
     scopeOfWork,
     slug,
+    portalPin,
   }).returning();
 
   // Create mock deliverables for the demo
@@ -48,9 +53,20 @@ export async function createProject(formData: FormData) {
   // Create mock invoice
   await db.insert(invoices).values({
     projectId: project.id,
-    amount: 620000, // $6,200.00
+    amount: projectValue, // $6,200.00
     status: "UNPAID",
   });
+
+  // Attempt to send the welcome email asynchronously
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const magicLink = `${appUrl}/p/${slug}`;
+    if (client.email) {
+      await sendProjectWelcomeEmail(client.email, client.name, project.projectName, magicLink, portalPin);
+    } 
+  } catch (emailError) {
+    console.error("Failed to send welcome email:", emailError);
+  }
 
   revalidatePath("/projects");
   revalidatePath("/dashboard");
@@ -102,4 +118,51 @@ export async function notifyUploadAction(slug: string) {
     console.error('Notification error', error)
     throw new Error('Failed to send notification')
   }
+}
+
+export async function sendReminderAction(slug: string) {
+  try {
+    const [project] = await db
+      .select({
+        projectName: projects.projectName,
+        clientName: clients.name,
+        clientEmail: clients.email
+      })
+      .from(projects)
+      .innerJoin(clients, eq(projects.clientId, clients.id))
+      .where(eq(projects.slug, slug))
+
+    if (project && project.clientEmail) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const magicLink = `${appUrl}/p/${slug}`;
+      await sendReminderEmail(project.clientEmail, project.clientName, project.projectName, magicLink);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Reminder email error', error)
+    throw new Error('Failed to send reminder email')
+  }
+}
+
+export async function updateProjectStatus(slug: string, status: "AWAITING_SIGNATURE" | "COLLECTING_ASSETS" | "IN_PROGRESS" | "IN_REVIEW" | "DELIVERY" | "COMPLETED") {
+  await db.update(projects)
+    .set({ status })
+    .where(eq(projects.slug, slug));
+  
+  revalidatePath(`/projects`);
+  revalidatePath(`/p/${slug}`);
+  revalidatePath(`/dashboard`);
+}
+
+export async function updateProjectScope(slug: string, scopeOfWork: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  
+  await db.update(projects)
+    .set({ scopeOfWork })
+    .where(eq(projects.slug, slug));
+    
+  revalidatePath(`/projects/${slug}`);
+  revalidatePath(`/p/${slug}`);
 }

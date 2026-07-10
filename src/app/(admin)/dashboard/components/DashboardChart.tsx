@@ -2,16 +2,16 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
-const data = [
-  { name: 'Jan', value: 2000 },
-  { name: 'Feb', value: 3800 },
-  { name: 'Mar', value: 3200 },
-  { name: 'Apr', value: 5000 },
-  { name: 'May', value: 4500 },
-  { name: 'Jun', value: 8900 },
-];
+type ChartDataPoint = {
+  name: string;
+  value: number;
+};
 
-export function DashboardChart() {
+export function DashboardChart({ data = [] }: { data?: ChartDataPoint[] }) {
+  if (!data || data.length === 0) {
+    return <div className="h-[250px] w-full flex items-center justify-center text-slate-400">No revenue data yet.</div>;
+  }
+
   return (
     <div className="h-[250px] w-full">
       <ResponsiveContainer width="100%" height="100%">

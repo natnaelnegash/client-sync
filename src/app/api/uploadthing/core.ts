@@ -22,6 +22,28 @@ export const ourFileRouter = {
             fileName: file.name
         })
         return { url: file.ufsUrl }
+    }),
+    adminDeliverable: f({ 
+        pdf: {maxFileSize: '16MB'}, 
+        image: {maxFileSize: '16MB'}, 
+        video: {maxFileSize: '64MB'},
+        blob: {maxFileSize: '64MB'} // for other files like zips
+    })
+    .onUploadComplete(async ({ file }) => {
+        return { url: file.ufsUrl }
+    }),
+    contractUpload: f({ pdf: {maxFileSize: '4MB'} })
+    .input(z.object({projectId: z.string()}))
+    .middleware(async ({input}) => {
+        return {projectId: input.projectId}
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+        await db.insert(files).values({
+            projectId: metadata.projectId,
+            fileUrl: file.ufsUrl,
+            fileName: file.name
+        })
+        return { url: file.ufsUrl }
     })
 } satisfies FileRouter
 

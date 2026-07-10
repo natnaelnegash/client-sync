@@ -19,21 +19,20 @@ export function TabPayments({ settings }: { settings: any }) {
       }}
       className="space-y-6 animate-in fade-in duration-500"
     >
-      {/* Stripe Integration Section */}
+      {/* Chapa Integration Section */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Stripe Integration</h2>
-        <p className="text-sm text-slate-500 mb-6">Connect Stripe to collect invoice payments directly from your client portal.</p>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Chapa Integration</h2>
+        <p className="text-sm text-slate-500 mb-6">Connect Chapa to collect invoice payments directly from your client portal in ETB.</p>
         
         <div className="space-y-4 max-w-2xl">
-          <Button className="bg-[#635BFF] hover:bg-[#5851E5] text-white h-11 px-6 rounded-xl font-bold shadow-sm">
+          <Button type="button" className="bg-[#00A651] hover:bg-[#008f46] text-white h-11 px-6 rounded-xl font-bold shadow-sm">
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 10.5C12 10.5 12 8.75 9.5 8.75C7 8.75 7 10.5 7 10.5C7 10.5 7 12.25 9.5 12.25C12 12.25 12 14 12 14C12 14 12 15.75 14.5 15.75C17 15.75 17 14 17 14C17 14 17 12.25 14.5 12.25C12 12.25 12 10.5 12 10.5Z" fill="currentColor"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M13.826 12.4571C13.826 11.0261 12.4842 10.4571 11.2312 10.021C10.0526 9.61099 9.39053 9.38072 9.39053 8.71836C9.39053 7.97116 10.0474 7.42146 11.1384 7.42146C12.383 7.42146 13.0642 8.01639 13.3101 8.35824L14.6593 6.64364C14.0729 5.86799 12.8946 4.96696 11.1384 4.96696C8.80993 4.96696 7.02621 6.36817 7.02621 8.71836C7.02621 10.1983 8.30737 10.7424 9.5541 11.1685C10.7441 11.5755 11.4616 11.8329 11.4616 12.5647C11.4616 13.1673 10.9575 13.8443 9.70462 13.8443C8.01211 13.8443 7.15114 12.9806 6.84061 12.5852L5.42105 14.2255C5.97579 14.9351 7.24282 16.3263 9.70462 16.3263C12.1812 16.3263 13.826 14.8876 13.826 12.4571Z" fill="white"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="currentColor"/>
             </svg>
-            Connect Stripe
+            Connect Chapa
           </Button>
           <p className="text-xs text-slate-500 leading-relaxed max-w-[500px]">
-            We use Stripe Connect to securely process payments. You keep 100% of what you invoice — ClientSync OS never takes a cut.
+            We use Chapa to securely process payments in Ethiopia. You keep 100% of what you invoice — ClientSync OS never takes a cut.
           </p>
         </div>
       </div>

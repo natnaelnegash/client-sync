@@ -8,10 +8,25 @@ import { Input } from "@/components/ui/input";
 import { Plus, CheckCircle2, Clock, AlertCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 import { CreateInvoiceModal } from "./components/CreateInvoiceModal";
+import { getWorkspaceOwnerId } from "@/utils/workspace";
+import Link from "next/link";
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  const ownerId = await getWorkspaceOwnerId(
+    session.user.id,
+    session.user.email,
+  );
+
+  const resolvedParams = await searchParams;
+  const statusFilter =
+    typeof resolvedParams.status === "string" ? resolvedParams.status : "all";
 
   // Fetch all projects for the dropdown
   const userProjects = await db
@@ -22,7 +37,7 @@ export default async function InvoicesPage() {
     })
     .from(projects)
     .innerJoin(clients, eq(projects.clientId, clients.id))
-    .where(eq(projects.userId, session.user.id));
+    .where(eq(projects.userId, ownerId));
 
   // Fetch all invoices for the current user's projects
   const rawInvoices = await db
@@ -37,20 +52,24 @@ export default async function InvoicesPage() {
     .from(invoices)
     .innerJoin(projects, eq(invoices.projectId, projects.id))
     .innerJoin(clients, eq(projects.clientId, clients.id))
-    .where(eq(projects.userId, session.user.id))
+    .where(eq(projects.userId, ownerId))
     .orderBy(desc(invoices.createdAt));
 
   // We map the database invoices and mock some "INV-0XX" IDs for the UI since we use UUIDs internally
   const mappedInvoices = rawInvoices.map((inv, index) => {
     // Generate a faux INV-XXX ID based on index for the demo if we don't have a human readable one
-    const fauxId = `INV-${String(rawInvoices.length - index + 25).padStart(3, '0')}`;
-    
+    const fauxId = `INV-${String(rawInvoices.length - index + 25).padStart(3, "0")}`;
+
     // Determine if overdue: UNPAID and dueDate is in the past
     let displayStatus = inv.status;
-    if (inv.status === 'UNPAID' && inv.dueDate && new Date(inv.dueDate) < new Date()) {
-      displayStatus = 'OVERDUE';
-    } else if (inv.status === 'UNPAID') {
-      displayStatus = 'PENDING';
+    if (
+      inv.status === "UNPAID" &&
+      inv.dueDate &&
+      new Date(inv.dueDate) < new Date()
+    ) {
+      displayStatus = "OVERDUE";
+    } else if (inv.status === "UNPAID") {
+      displayStatus = "PENDING";
     }
 
     return {
@@ -60,21 +79,30 @@ export default async function InvoicesPage() {
     };
   });
 
+  let filteredInvoices = mappedInvoices;
+  if (statusFilter !== "all") {
+    filteredInvoices = mappedInvoices.filter((i) => i.status === statusFilter);
+  }
+
   // Calculate KPIs
   const revenueCollected = mappedInvoices
-    .filter(i => i.status === 'PAID')
+    .filter((i) => i.status === "PAID")
     .reduce((acc, curr) => acc + curr.amount, 0);
 
   const pendingPayment = mappedInvoices
-    .filter(i => i.displayStatus === 'PENDING')
+    .filter((i) => i.displayStatus === "PENDING")
     .reduce((acc, curr) => acc + curr.amount, 0);
 
   const overdueAmount = mappedInvoices
-    .filter(i => i.displayStatus === 'OVERDUE')
+    .filter((i) => i.displayStatus === "OVERDUE")
     .reduce((acc, curr) => acc + curr.amount, 0);
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(cents / 100);
   };
 
   return (
@@ -83,7 +111,9 @@ export default async function InvoicesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-slate-500 text-sm mt-1">{mappedInvoices.length} total invoices</p>
+          <p className="text-slate-500 text-sm mt-1">
+            {mappedInvoices.length} total invoices
+          </p>
         </div>
         <CreateInvoiceModal projects={userProjects} />
       </div>
@@ -95,9 +125,13 @@ export default async function InvoicesPage() {
             <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Revenue collected</span>
+            <span className="text-sm font-medium text-slate-500">
+              Revenue collected
+            </span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{formatCurrency(revenueCollected)}</p>
+          <p className="text-3xl font-bold text-slate-900">
+            {formatCurrency(revenueCollected)}
+          </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -105,9 +139,13 @@ export default async function InvoicesPage() {
             <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4 text-amber-500" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Pending payment</span>
+            <span className="text-sm font-medium text-slate-500">
+              Pending payment
+            </span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{formatCurrency(pendingPayment)}</p>
+          <p className="text-3xl font-bold text-slate-900">
+            {formatCurrency(pendingPayment)}
+          </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -115,9 +153,13 @@ export default async function InvoicesPage() {
             <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
               <AlertCircle className="w-4 h-4 text-red-500" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Overdue amount</span>
+            <span className="text-sm font-medium text-slate-500">
+              Overdue amount
+            </span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{formatCurrency(overdueAmount)}</p>
+          <p className="text-3xl font-bold text-slate-900">
+            {formatCurrency(overdueAmount)}
+          </p>
         </div>
       </div>
 
@@ -125,17 +167,65 @@ export default async function InvoicesPage() {
       <div className="flex items-center gap-4">
         <div className="relative max-w-sm w-full">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input 
-            placeholder="Search invoices..." 
+          <Input
+            placeholder="Search invoices..."
             className="pl-9 h-10 bg-white border-slate-200 focus-visible:ring-indigo-600 rounded-lg text-sm w-full"
           />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-          <button className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-full whitespace-nowrap">All</button>
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium rounded-full whitespace-nowrap transition-colors">Paid</button>
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium rounded-full whitespace-nowrap transition-colors">Pending</button>
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium rounded-full whitespace-nowrap transition-colors">Overdue</button>
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium rounded-full whitespace-nowrap transition-colors">Draft</button>
+          {/* <button className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-full whitespace-nowrap">
+            All
+          </button> */}
+          <Link
+            href="?status=all"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${
+              statusFilter === "all"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            All
+          </Link>
+          <Link
+            href="?status=PAID"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${
+              statusFilter === "PAID"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Paid
+          </Link>
+          <Link
+            href="?status=PENDING"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${
+              statusFilter === "PENDING"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Pending
+          </Link>
+          <Link
+            href="?status=OVERDUE"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${
+              statusFilter === "OVERDUE"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Overdue
+          </Link>
+          <Link
+            href="?status=DRAFT"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${
+              statusFilter === "DRAFT"
+                ? "bg-indigo-600 text-white"
+                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Draft
+          </Link>
         </div>
       </div>
 
@@ -153,36 +243,49 @@ export default async function InvoicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mappedInvoices.length === 0 ? (
+              {filteredInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    No invoices found. Create a project to automatically generate one.
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    No invoices found. Create a project to automatically
+                    generate one.
                   </td>
                 </tr>
               ) : (
-                mappedInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors group">
+                filteredInvoices.map((inv) => (
+                  <tr
+                    key={inv.id}
+                    className="hover:bg-slate-50/50 transition-colors group"
+                  >
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{inv.displayId}</p>
-                      <p className="text-xs text-slate-500">{inv.projectName}</p>
+                      <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                        {inv.displayId}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {inv.projectName}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">{inv.clientName}</p>
+                      <p className="font-bold text-slate-900">
+                        {inv.clientName}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
-                      {inv.displayStatus === 'PAID' && (
+                      {inv.displayStatus === "PAID" && (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Paid
                         </div>
                       )}
-                      {inv.displayStatus === 'PENDING' && (
+                      {inv.displayStatus === "PENDING" && (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
                           <Clock className="w-3.5 h-3.5" />
                           Pending
                         </div>
                       )}
-                      {inv.displayStatus === 'OVERDUE' && (
+                      {inv.displayStatus === "OVERDUE" && (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">
                           <AlertCircle className="w-3.5 h-3.5" />
                           Overdue
@@ -191,14 +294,20 @@ export default async function InvoicesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-900">
-                        {inv.dueDate ? format(new Date(inv.dueDate), 'MMM d, yyyy') : 'Upon receipt'}
+                        {inv.dueDate
+                          ? format(new Date(inv.dueDate), "MMM d, yyyy")
+                          : "Upon receipt"}
                       </p>
-                      {inv.displayStatus === 'PAID' && (
-                        <p className="text-xs text-emerald-600">Paid {format(new Date(), 'MMM d, yyyy')}</p>
+                      {inv.displayStatus === "PAID" && (
+                        <p className="text-xs text-emerald-600">
+                          Paid {format(new Date(), "MMM d, yyyy")}
+                        </p>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">{formatCurrency(inv.amount)}</p>
+                      <p className="font-bold text-slate-900">
+                        {formatCurrency(inv.amount)}
+                      </p>
                     </td>
                   </tr>
                 ))
@@ -206,26 +315,68 @@ export default async function InvoicesPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination Footer */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            Showing 1-{Math.min(mappedInvoices.length, 6)} of {mappedInvoices.length}
+            Showing 1-{Math.min(filteredInvoices.length, 6)} of{" "}
+            {filteredInvoices.length}
           </p>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400 hover:text-slate-600" disabled>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 text-slate-400 hover:text-slate-600"
+              disabled
+            >
               <span className="sr-only">Previous</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 19l-7-7 7-7"
+                ></path>
+              </svg>
             </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
               1
             </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-600 hover:bg-slate-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 text-slate-600 hover:bg-slate-100"
+            >
               2
             </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400 hover:text-slate-600">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 text-slate-400 hover:text-slate-600"
+            >
               <span className="sr-only">Next</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5l7 7-7 7"
+                ></path>
+              </svg>
             </Button>
           </div>
         </div>
