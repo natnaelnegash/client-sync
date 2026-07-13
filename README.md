@@ -107,7 +107,6 @@ ClientSync is built using cutting-edge web technologies to ensure a scalable, fa
 
 ## 📸 Screenshots
 
-*(Add some amazing screenshots of the dashboard, the magic link login, the client portal grid view, and the chat interface here to make the README pop!)*
 
 ## 🤝 Contributing
 
