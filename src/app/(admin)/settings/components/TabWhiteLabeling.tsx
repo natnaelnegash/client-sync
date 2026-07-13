@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateWhiteLabeling } from "@/app/actions/settings";
+import { UploadButton } from "@/utils/uploadthing";
 
 export function TabWhiteLabeling({ settings }: { settings: any }) {
   const [accentColor, setAccentColor] = useState(settings?.brandAccentColor || "#10B981");
+  const [logoUrl, setLogoUrl] = useState(settings?.brandLogoUrl || "");
   const [loading, setLoading] = useState(false);
   
   const colors = [
@@ -26,6 +28,7 @@ export function TabWhiteLabeling({ settings }: { settings: any }) {
       action={async (data) => {
         setLoading(true);
         data.append("brandAccentColor", accentColor);
+        data.append("brandLogoUrl", logoUrl);
         await updateWhiteLabeling(data);
         setLoading(false);
       }}
@@ -39,14 +42,25 @@ export function TabWhiteLabeling({ settings }: { settings: any }) {
           <div className="space-y-3">
             <Label className="text-sm font-bold text-slate-900">Agency Logo</Label>
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 border-dashed flex items-center justify-center shrink-0">
-                <span className="text-slate-400 font-bold text-2xl">N</span>
+              <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-slate-400 font-bold text-2xl">N</span>
+                )}
               </div>
               <div className="space-y-2">
-                <Button variant="outline" className="h-9 px-4 rounded-lg border-slate-200 text-slate-700 font-medium">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload logo
-                </Button>
+                <UploadButton
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => {
+                    if (res && res.length > 0) {
+                      setLogoUrl(res[0].url);
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    alert(`ERROR! ${error.message}`);
+                  }}
+                />
                 <p className="text-xs text-slate-500">SVG, PNG or JPG · Max 2MB · Recommended 200×200px</p>
               </div>
             </div>

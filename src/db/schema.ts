@@ -7,6 +7,7 @@ import {
   uuid,
   pgEnum,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core"
 import type { AdapterAccountType } from "next-auth/adapters"
 
@@ -83,16 +84,79 @@ export const projectStatusEnum = pgEnum("project_status", [
   "COMPLETED"
 ])
 
+export const projectTypeEnum = pgEnum("project_type", [
+  "WEB",
+  "BRANDING",
+  "VIDEO",
+  "MARKETING",
+  "CUSTOM"
+])
+
+export const deliverableTypeEnum = pgEnum("deliverable_type", [
+  "DESIGN",
+  "CODE",
+  "VIDEO",
+  "DOCUMENT",
+  "PRESENTATION"
+])
+
+export const projectTemplates = pgTable("project_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId").references(() => users.id).notNull(),
+  type: projectTypeEnum("type").default("CUSTOM").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  config: jsonb("config"),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const templateMilestones = pgTable("template_milestones", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id").references(() => projectTemplates.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  order: integer("order").notNull().default(0),
+})
+
+export const templateDeliverables = pgTable("template_deliverables", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  milestoneId: uuid("milestone_id").references(() => templateMilestones.id, { onDelete: "cascade" }).notNull(),
+  type: deliverableTypeEnum("type").default("DOCUMENT").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  order: integer("order").notNull().default(0),
+})
+
+export const templateTasks = pgTable("template_tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  milestoneId: uuid("milestone_id").references(() => templateMilestones.id, { onDelete: "cascade" }),
+  deliverableId: uuid("deliverable_id").references(() => templateDeliverables.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  order: integer("order").notNull().default(0),
+})
+
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId").references(() => users.id).notNull(),
   clientId: uuid("client_id").references(() => clients.id).notNull(),
+  type: projectTypeEnum("type").default("CUSTOM").notNull(),
+  sourceTemplateId: uuid("source_template_id").references(() => projectTemplates.id),
+  config: jsonb("config"),
   projectName: text("project_name").notNull(),
   slug: text("slug").notNull().unique(),
   scopeOfWork: text("scope_of_work").notNull(),
   status: projectStatusEnum("status").default("AWAITING_SIGNATURE").notNull(),
   clientSignature: text("client_signature"),
   portalPin: text("portal_pin"), // 4-digit PIN
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const milestones = pgTable("milestones", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  status: text("status").default("PENDING").notNull(),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -118,15 +182,30 @@ export const invoices = pgTable("invoices", {
 export const deliverables = pgTable("deliverables", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id).notNull(),
+  milestoneId: uuid("milestone_id").references(() => milestones.id, { onDelete: "cascade" }),
   invoiceId: uuid("invoice_id").references(() => invoices.id), // Link to invoice
+  type: deliverableTypeEnum("type").default("DOCUMENT").notNull(),
   title: text("title").notNull(),
   description: text("description"),
+  order: integer("order").notNull().default(0),
   status: text("status").default("Pending").notNull(), // Pending, In progress..., Complete
   previewUrl: text("preview_url"), // Low-quality preview (watermarked video/image)
   fileUrl: text("file_url"), // High-quality final deliverable
   requiresPayment: boolean("requires_payment").default(false).notNull(),
   clientStatus: text("client_status").default("PENDING").notNull(), // PENDING, APPROVED, REVISIONS_REQUESTED
   clientFeedback: text("client_feedback"),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const tasks = pgTable("tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  milestoneId: uuid("milestone_id").references(() => milestones.id, { onDelete: "cascade" }),
+  deliverableId: uuid("deliverable_id").references(() => deliverables.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
@@ -168,4 +247,14 @@ export const teamMembers = pgTable("team_members", {
   role: text("role").default("Member").notNull(), // Owner, Admin, Member
   status: text("status").default("Pending").notNull(), // Pending, Active
   createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const deliverableDependencies = pgTable("deliverable_dependencies", {
+  dependentId: uuid("dependent_id").references(() => deliverables.id, { onDelete: "cascade" }).notNull(),
+  prerequisiteId: uuid("prerequisite_id").references(() => deliverables.id, { onDelete: "cascade" }).notNull(),
+})
+
+export const taskDependencies = pgTable("task_dependencies", {
+  dependentId: uuid("dependent_id").references(() => tasks.id, { onDelete: "cascade" }).notNull(),
+  prerequisiteId: uuid("prerequisite_id").references(() => tasks.id, { onDelete: "cascade" }).notNull(),
 })

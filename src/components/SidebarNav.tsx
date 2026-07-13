@@ -7,7 +7,8 @@ import {
   Folder, 
   Users, 
   Receipt, 
-  Settings 
+  Settings,
+  LayoutTemplate
 } from "lucide-react";
 
 export function SidebarNav() {
@@ -17,6 +18,7 @@ export function SidebarNav() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Projects", href: "/projects", icon: Folder },
     { name: "Clients", href: "/clients", icon: Users },
+    { name: "Templates", href: "/templates", icon: LayoutTemplate },
     { name: "Invoices", href: "/invoices", icon: Receipt },
     { name: "Settings", href: "/settings", icon: Settings },
   ];

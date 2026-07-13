@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createProject } from "@/app/actions/project";
+import { enhanceScopeOfWork } from "@/app/actions/ai";
 
 export function CreateProjectModal({
   triggerVariant = "default",
@@ -67,15 +68,18 @@ export function CreateProjectModal({
 
   const handleEnhance = async () => {
     setIsEnhancing(true);
-    // Simulate AI generation delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (scopeText.trim() === "") {
-      setScopeText("### Project Overview\n\n### Deliverables\n- \n- \n\n### Timeline\n");
-    } else {
-      setScopeText(`### Enhanced Scope of Work\n\n${scopeText.trim()}\n\n### Next Steps\n- `);
+    try {
+      // Find the project name input to pass as context
+      const projectNameInput = document.getElementById("projectName") as HTMLInputElement;
+      const projectName = projectNameInput?.value || "Untitled Project";
+      
+      const enhancedText = await enhanceScopeOfWork(scopeText, projectName);
+      setScopeText(enhancedText);
+    } catch (error: any) {
+      alert("AI Enhance failed: " + error.message);
+    } finally {
+      setIsEnhancing(false);
     }
-    setIsEnhancing(false);
   };
 
   useEffect(() => {

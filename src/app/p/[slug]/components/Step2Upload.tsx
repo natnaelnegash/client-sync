@@ -33,7 +33,7 @@ export function Step2Upload({
           setLoading(true);
           await completeAssetCollection(projectSlug);
         }}>
-          <Button type="submit" variant="outline" className="hidden sm:flex text-indigo-600 border-indigo-200 hover:bg-indigo-50 font-bold rounded-xl h-10 px-4">
+          <Button type="submit" variant="outline" className="hidden sm:flex text-brand border-brand/20 hover:bg-brand/10 font-bold rounded-xl h-10 px-4">
             <FolderOpen className="w-4 h-4 mr-2" />
             View tracker
             <ArrowRight className="w-4 h-4 ml-1" />
@@ -46,39 +46,39 @@ export function Step2Upload({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
           <ul className="space-y-3">
             <li className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
               Existing logo files (SVG, AI, EPS, PNG)
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
               Photography / imagery you own
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
               Color swatches or palette references
             </li>
           </ul>
           <ul className="space-y-3">
             <li className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
               Brand guidelines or style guide
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0" />
               Any fonts or typefaces you use
             </li>
             <li className="flex items-center gap-3 text-sm text-slate-600 leading-snug">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-1 self-start" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-1 self-start" />
               Anything else that represents your current brand
             </li>
           </ul>
         </div>
       </div>
 
-      <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-1 overflow-hidden transition-colors hover:border-indigo-300 hover:bg-indigo-50/50">
+      <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-1 overflow-hidden transition-colors hover:border-brand/40 hover:bg-brand/5">
         <UploadDropzone
           endpoint="projectAssets"
-          className="ut-button:bg-indigo-600 ut-button:ut-readying:bg-indigo-600/50 ut-button:ut-uploading:bg-indigo-600/50 ut-label:text-indigo-600 hover:bg-transparent border-none py-12"
+          className="ut-button:bg-brand ut-button:ut-readying:bg-brand/50 ut-button:ut-uploading:bg-brand/50 ut-label:text-brand hover:bg-transparent border-none py-12"
           onClientUploadComplete={() => {
             setUploadedCount(prev => prev + 1);
           }}
@@ -101,7 +101,7 @@ export function Step2Upload({
         }}>
           <Button 
             type="submit" 
-            className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg shadow-sm transition-all"
+            className="w-full h-14 bg-brand hover:opacity-90 text-white font-bold rounded-xl text-lg shadow-sm transition-all"
             disabled={loading}
           >
             {uploadedCount > 0 ? "Done Uploading — view project status" : "Skip for now — view project status"}
