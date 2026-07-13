@@ -74,7 +74,7 @@ export function CreateProjectModal({
       const projectName = projectNameInput?.value || "Untitled Project";
       
       const enhancedText = await enhanceScopeOfWork(scopeText, projectName);
-      setScopeText(enhancedText);
+      setScopeText(enhancedText || "");
     } catch (error: any) {
       alert("AI Enhance failed: " + error.message);
     } finally {
@@ -92,8 +92,9 @@ export function CreateProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {triggerVariant === "default" ? (
+      <DialogTrigger
+        render={
+          triggerVariant === "default" ? (
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-6 rounded-lg shadow-sm">
             <Plus className="w-4 h-4 mr-2" />
             New Project
@@ -111,7 +112,7 @@ export function CreateProjectModal({
             </div>
           </button>
         )}
-      </DialogTrigger>
+      />
 
       <DialogContent className="sm:max-w-[640px] p-0 overflow-hidden bg-white border-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] !rounded-2xl">
         <form

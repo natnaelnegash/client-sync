@@ -37,11 +37,13 @@ export function CreateTemplateModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-          + New Template
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            + New Template
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-[425px]">
         <form action={handleSubmit}>
           <DialogHeader>

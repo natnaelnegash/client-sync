@@ -20,12 +20,14 @@ export function CreateClientModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-4 rounded-lg shadow-sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger 
+        render={
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-4 rounded-lg shadow-sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Client
+          </Button>
+        }
+      />
       
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white border-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] !rounded-2xl">
         <form

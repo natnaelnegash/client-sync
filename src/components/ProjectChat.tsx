@@ -11,7 +11,7 @@ type Message = {
   projectId: string;
   sender: string;
   content: string;
-  createdAt: string | Date;
+  createdAt: string | Date | null;
 };
 
 export function ProjectChat({

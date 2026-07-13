@@ -3,7 +3,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { auth } from "@/auth";
 
-export async function enhanceScopeOfWork(currentText: string, projectName: string) {
+export async function enhanceScopeOfWork(currentText: string, projectName: string): Promise<string> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -32,7 +32,7 @@ ${currentText || "(No notes provided, generate a template)"}
       contents: prompt,
     });
     
-    return response.text;
+    return response.text || "";
   } catch (error: any) {
     console.error("AI Enhance Error:", error);
     throw new Error(error.message || "Failed to enhance scope of work.");

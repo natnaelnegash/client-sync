@@ -13,7 +13,7 @@ export async function updateWhiteLabeling(formData: FormData) {
   const agencyName = formData.get("agencyName") as string;
   const agencyTagline = formData.get("agencyTagline") as string;
   const brandAccentColor = formData.get("brandAccentColor") as string;
-  const brandLogoUrl = formData.get("brandLogoUrl") as string;
+  const agencyLogoUrl = formData.get("brandLogoUrl") as string;
 
   await db.insert(workspaceSettings)
     .values({
@@ -21,7 +21,7 @@ export async function updateWhiteLabeling(formData: FormData) {
       agencyName,
       agencyTagline,
       brandAccentColor,
-      brandLogoUrl,
+      agencyLogoUrl,
     })
     .onConflictDoUpdate({
       target: workspaceSettings.userId,
@@ -29,7 +29,7 @@ export async function updateWhiteLabeling(formData: FormData) {
         agencyName,
         agencyTagline,
         brandAccentColor,
-        brandLogoUrl,
+        agencyLogoUrl,
       },
     });
 

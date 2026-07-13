@@ -68,7 +68,7 @@ export default async function ClientPortalPage({
 
   const agencyName = settings?.agencyName || "Northlight Studio";
   const brandAccentColor = settings?.brandAccentColor || "#4F46E5";
-  const brandLogoUrl = settings?.brandLogoUrl || null;
+  const brandLogoUrl = settings?.agencyLogoUrl || null;
   const agencyTagline = settings?.agencyTagline || "We design digital experiences.";
 
   // PIN Authentication Check

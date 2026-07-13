@@ -21,11 +21,13 @@ export function EditClientModal({ client }: { client: ClientData }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 rounded-full">
-          <MoreHorizontal className="w-5 h-5" />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
+            Edit
+          </Button>
+        }
+      />
       
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white border-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] !rounded-2xl">
         <form

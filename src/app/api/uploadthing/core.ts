@@ -44,6 +44,10 @@ export const ourFileRouter = {
             fileName: file.name
         })
         return { url: file.ufsUrl }
+    }),
+    imageUploader: f({ image: {maxFileSize: '4MB'} })
+    .onUploadComplete(async ({ file }) => {
+        return { url: file.ufsUrl }
     })
 } satisfies FileRouter
 

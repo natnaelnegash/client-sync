@@ -10,7 +10,7 @@ import { UploadButton } from "@/utils/uploadthing";
 
 export function TabWhiteLabeling({ settings }: { settings: any }) {
   const [accentColor, setAccentColor] = useState(settings?.brandAccentColor || "#10B981");
-  const [logoUrl, setLogoUrl] = useState(settings?.brandLogoUrl || "");
+  const [logoUrl, setLogoUrl] = useState(settings?.agencyLogoUrl || "");
   const [loading, setLoading] = useState(false);
   
   const colors = [
