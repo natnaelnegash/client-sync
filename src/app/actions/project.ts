@@ -18,12 +18,18 @@ export async function createProject(formData: FormData) {
   const projectName = formData.get("projectName") as string;
   const scopeOfWork = formData.get("scopeOfWork") as string;
   const projectValue = Number(formData.get("projectInvoiceAmount"));
-  console.log(clientName, projectName, scopeOfWork);
+  const projectType = formData.get("projectType") as string
+  // console.log(clientName, projectName, scopeOfWork);
 
   const slug = `${clientName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${nanoid(6)}`;
   
   // Generate a random 4-digit PIN
   const portalPin = Math.floor(1000 + Math.random() * 9000).toString();
+
+  const [type] = await db.select().from(projectTypes).where(eq(projectTypes.name, projectType))
+  if (!type) throw new Error("Project type not found");
+
+  const typeId = type.id
 
   let [client] = await db.select().from(clients).where(eq(clients.name, clientName));
   if (!client) {
@@ -35,6 +41,7 @@ export async function createProject(formData: FormData) {
 
   const [project] = await db.insert(projects).values({
     userId,
+    typeId,
     clientId: client.id,
     projectName,
     scopeOfWork,
@@ -43,12 +50,12 @@ export async function createProject(formData: FormData) {
   }).returning();
 
   // Create mock deliverables for the demo
-  await db.insert(deliverables).values([
-    { projectId: project.id, title: "Brand Strategy Document", status: "Complete" },
-    { projectId: project.id, title: "Logo System (All Variants)", status: "In progress..." },
-    { projectId: project.id, title: "Brand Guidelines PDF", status: "In progress..." },
-    { projectId: project.id, title: "Social Media Templates", status: "Pending" },
-  ]);
+  // await db.insert(deliverables).values([
+  //   { projectId: project.id, title: "Brand Strategy Document", status: "Complete" },
+  //   { projectId: project.id, title: "Logo System (All Variants)", status: "In progress..." },
+  //   { projectId: project.id, title: "Brand Guidelines PDF", status: "In progress..." },
+  //   { projectId: project.id, title: "Social Media Templates", status: "Pending" },
+  // ]);
 
   // Create mock invoice
   await db.insert(invoices).values({

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { projectTemplates, templateMilestones, templateDeliverables, templateTasks } from "@/db/schema";
+import { projectTemplates, templateMilestones, templateDeliverables, templateTasks, workspaceSettings, projectTypes } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getWorkspaceOwnerId } from "@/utils/workspace";
@@ -15,12 +15,20 @@ export async function createTemplate(formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const type = formData.get("type") as any;
+
+  console.log('Template type');
   
+
+  const [projectType] = await db.select().from(projectTypes).where(eq(projectTypes.name, type))
+  if (!projectType) throw new Error("Project type not found");
+
+  const typeId = projectType.id
+
   const [newTemplate] = await db.insert(projectTemplates).values({
     userId: ownerId,
     name,
     description,
-    type: type || "CUSTOM",
+    typeId,
   }).returning();
   
   // Create default milestone
@@ -41,9 +49,14 @@ export async function updateTemplate(id: string, formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const type = formData.get("type") as any;
+
+  const [projectType] = await db.select().from(projectTypes).where(eq(projectTypes.name, type))
+  if (!projectType) throw new Error("Project type not found");
+
+  const typeId = projectType.id
   
   await db.update(projectTemplates)
-    .set({ name, description, type })
+    .set({ name, description, typeId })
     .where(eq(projectTemplates.id, id));
     
   revalidatePath(`/templates/${id}`);
@@ -76,14 +89,14 @@ export async function deleteTemplateMilestone(id: string, templateId: string) {
   revalidatePath(`/templates/${templateId}`);
 }
 
-export async function createTemplateDeliverable(milestoneId: string, title: string, type: any, templateId: string) {
+export async function createTemplateDeliverable(milestoneId: string, title: string, typeId: any, templateId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
   
   await db.insert(templateDeliverables).values({
     milestoneId,
     title,
-    type: type || "DOCUMENT",
+    typeId,
   });
   revalidatePath(`/templates/${templateId}`);
 }

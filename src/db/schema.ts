@@ -84,26 +84,56 @@ export const projectStatusEnum = pgEnum("project_status", [
   "COMPLETED"
 ])
 
-export const projectTypeEnum = pgEnum("project_type", [
-  "WEB",
-  "BRANDING",
-  "VIDEO",
-  "MARKETING",
-  "CUSTOM"
+export const templateTypeEnum = pgEnum("template_type", [
+  "CUSTOM",
+  "SYSTEM"
 ])
 
-export const deliverableTypeEnum = pgEnum("deliverable_type", [
-  "DESIGN",
-  "CODE",
-  "VIDEO",
-  "DOCUMENT",
-  "PRESENTATION"
-])
+// export const projectTypeEnum = pgEnum("project_type", [
+//   "WEB",
+//   "BRANDING",
+//   "VIDEO",
+//   "MARKETING",
+//   "CUSTOM"
+// ])
+
+// export const deliverableTypeEnum = pgEnum("deliverable_type", [
+//   "DESIGN",
+//   "CODE",
+//   "VIDEO",
+//   "DOCUMENT",
+//   "PRESENTATION"
+// ])
+
+export const projectTypes = pgTable("project_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  icon: text("icon"),
+  color: text("color"),
+  isSystem: boolean("is_system").default(true).notNull(),
+  config: jsonb("config"),
+  createdBy: text("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
+export const deliverableTypes = pgTable("deliverable_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  icon: text("icon"),
+  color: text("color"),
+  isSystem: boolean("is_system").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+})
 
 export const projectTemplates = pgTable("project_templates", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId").references(() => users.id).notNull(),
-  type: projectTypeEnum("type").default("CUSTOM").notNull(),
+  typeId: uuid("type_id").references(() => projectTypes.id).notNull(),
+  type: templateTypeEnum('type').default('CUSTOM').notNull(),
   name: text("name").notNull(),
   description: text("description"),
   config: jsonb("config"),
@@ -120,7 +150,7 @@ export const templateMilestones = pgTable("template_milestones", {
 export const templateDeliverables = pgTable("template_deliverables", {
   id: uuid("id").primaryKey().defaultRandom(),
   milestoneId: uuid("milestone_id").references(() => templateMilestones.id, { onDelete: "cascade" }).notNull(),
-  type: deliverableTypeEnum("type").default("DOCUMENT").notNull(),
+  typeId: uuid("type_id").references(() => deliverableTypes.id).notNull(),
   title: text("title").notNull(),
   description: text("description"),
   order: integer("order").notNull().default(0),
@@ -139,7 +169,7 @@ export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId").references(() => users.id).notNull(),
   clientId: uuid("client_id").references(() => clients.id).notNull(),
-  type: projectTypeEnum("type").default("CUSTOM").notNull(),
+  typeId: uuid("type_id").references(() => projectTypes.id).notNull(),
   sourceTemplateId: uuid("source_template_id").references(() => projectTemplates.id),
   config: jsonb("config"),
   projectName: text("project_name").notNull(),
@@ -184,7 +214,7 @@ export const deliverables = pgTable("deliverables", {
   projectId: uuid("project_id").references(() => projects.id).notNull(),
   milestoneId: uuid("milestone_id").references(() => milestones.id, { onDelete: "cascade" }),
   invoiceId: uuid("invoice_id").references(() => invoices.id), // Link to invoice
-  type: deliverableTypeEnum("type").default("DOCUMENT").notNull(),
+  typeId: uuid("type_id").references(() => deliverableTypes.id).notNull(),
   title: text("title").notNull(),
   description: text("description"),
   order: integer("order").notNull().default(0),
