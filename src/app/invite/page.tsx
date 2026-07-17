@@ -25,8 +25,8 @@ export default async function InvitePage() {
         <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full">
           <h1 className="text-2xl font-bold text-slate-900 mb-2">No Invitation Found</h1>
           <p className="text-slate-500 mb-6">We couldn't find a pending invitation for {session.user.email}.</p>
-          <Button asChild className="w-full">
-            <a href="/dashboard">Go to Dashboard</a>
+          <Button render={<a href="/dashboard" />} className="w-full">
+            Go to Dashboard
           </Button>
         </div>
       </div>

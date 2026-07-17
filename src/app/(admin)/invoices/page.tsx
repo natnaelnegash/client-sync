@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { CreateInvoiceModal } from "./components/CreateInvoiceModal";
 import { getWorkspaceOwnerId } from "@/utils/workspace";
 import Link from "next/link";
+import { SearchInput } from "@/components/SearchInput";
 
 export default async function InvoicesPage({
   searchParams,
@@ -27,6 +28,8 @@ export default async function InvoicesPage({
   const resolvedParams = await searchParams;
   const statusFilter =
     typeof resolvedParams.status === "string" ? resolvedParams.status : "all";
+  const searchQuery =
+    typeof resolvedParams.q === "string" ? resolvedParams.q.toLowerCase() : "";
 
   // Fetch all projects for the dropdown
   const userProjects = await db
@@ -81,7 +84,17 @@ export default async function InvoicesPage({
 
   let filteredInvoices = mappedInvoices;
   if (statusFilter !== "all") {
-    filteredInvoices = mappedInvoices.filter((i) => i.status === statusFilter);
+    filteredInvoices = filteredInvoices.filter(
+      (i) => i.displayStatus === statusFilter,
+    );
+  }
+  if (searchQuery) {
+    filteredInvoices = filteredInvoices.filter(
+      (i) =>
+        i.displayId.toLowerCase().includes(searchQuery) ||
+        i.projectName?.toLowerCase().includes(searchQuery) ||
+        i.clientName?.toLowerCase().includes(searchQuery),
+    );
   }
 
   // Calculate KPIs
@@ -164,18 +177,11 @@ export default async function InvoicesPage({
       </div>
 
       {/* Filter Row */}
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Search invoices..."
-            className="pl-9 h-10 bg-white border-slate-200 focus-visible:ring-indigo-600 rounded-lg text-sm w-full"
-          />
+      <div className="flex sm:flex-row sm:items-center gap-2">
+        <div className="w-full sm:max-w-sm">
+          <SearchInput placeholder="Search invoices..." />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-          {/* <button className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-full whitespace-nowrap">
-            All
-          </button> */}
           <Link
             href="?status=all"
             className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shadow-sm transition-colors ${

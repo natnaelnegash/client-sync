@@ -1,84 +1,180 @@
 "use server";
 
 import { db } from "@/db";
-import { projects, clients, deliverables, invoices } from "@/db/schema";
-import { sendUploadNotificationEmail, sendProjectWelcomeEmail, sendReminderEmail } from "@/lib/mail";
+import {
+  projects,
+  clients,
+  deliverables,
+  invoices,
+  projectTypes,
+  projectTemplates,
+  templateMilestones,
+  templateDeliverables,
+  templateTasks,
+  milestones,
+  tasks,
+} from "@/db/schema";
+import {
+  sendUploadNotificationEmail,
+  sendProjectWelcomeEmail,
+  sendReminderEmail,
+  sendWelcomingEmailToClient,
+} from "@/lib/mail";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import { notFound } from "next/navigation";
 
 export async function createProject(formData: FormData) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthorized");
-  
+
   const clientName = formData.get("clientName") as string;
   const projectName = formData.get("projectName") as string;
   const scopeOfWork = formData.get("scopeOfWork") as string;
   const projectValue = Number(formData.get("projectInvoiceAmount"));
-  console.log(clientName, projectName, scopeOfWork);
+  const projectType = formData.get("projectType") as string;
+  const sourceTemplateId = "01a566f2-49fa-425b-9922-447f8aeefe3b";
 
   const slug = `${clientName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${nanoid(6)}`;
-  
   // Generate a random 4-digit PIN
   const portalPin = Math.floor(1000 + Math.random() * 9000).toString();
 
-  let [client] = await db.select().from(clients).where(eq(clients.name, clientName));
+  const [type] = await db
+    .select()
+    .from(projectTypes)
+    .where(eq(projectTypes.name, projectType));
+  if (!type) throw new Error("Project type not found");
+
+  const typeId = type.id;
+
+  let [client] = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.name, clientName));
   if (!client) {
-    [client] = await db.insert(clients).values({
-      userId,
-      name: clientName,
-    }).returning();
+    [client] = await db
+      .insert(clients)
+      .values({
+        userId,
+        name: clientName,
+      })
+      .returning();
   }
 
-  const [project] = await db.insert(projects).values({
-    userId,
-    clientId: client.id,
-    projectName,
-    scopeOfWork,
-    slug,
-    portalPin,
-  }).returning();
+  if (sourceTemplateId !== null) {
+    const sourceTemplate = await db.query.projectTemplates.findFirst({
+      where: eq(projectTemplates.id, sourceTemplateId),
+      with: {
+        milestones: {
+          with: {
+            deliverables: {
+              with: {
+                tasks: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (sourceTemplate) {
+      await db.transaction(async (tx) => {
+        const [liveProject] = await tx
+          .insert(projects)
+          .values({
+            userId,
+            typeId,
+            clientId: client.id,
+            projectName,
+            scopeOfWork,
+            slug,
+            sourceTemplateId: sourceTemplate?.id,
+            portalPin,
+          })
+          .returning();
 
-  // Create mock deliverables for the demo
-  await db.insert(deliverables).values([
-    { projectId: project.id, title: "Brand Strategy Document", status: "Complete" },
-    { projectId: project.id, title: "Logo System (All Variants)", status: "In progress..." },
-    { projectId: project.id, title: "Brand Guidelines PDF", status: "In progress..." },
-    { projectId: project.id, title: "Social Media Templates", status: "Pending" },
-  ]);
+        for (const templateMilestone of sourceTemplate?.milestones) {
+          const [liveMilestone] = await tx
+            .insert(milestones)
+            .values({
+              projectId: liveProject.id,
+              title: templateMilestone.title,
+              order: templateMilestone.order,
+            })
+            .returning();
 
-  // Create mock invoice
-  await db.insert(invoices).values({
-    projectId: project.id,
-    amount: projectValue, // $6,200.00
-    status: "UNPAID",
-  });
+          for (const templateDeliverable of templateMilestone.deliverables) {
+            const [liveDeliverable] = await tx
+              .insert(deliverables)
+              .values({
+                projectId: liveProject.id,
+                title: templateDeliverable.title,
+                milestoneId: liveMilestone.id,
+                typeId: templateDeliverable.typeId,
+              })
+              .returning();
+            for (const templateTask of templateDeliverable.tasks) {
+              await tx.insert(tasks).values({
+                projectId: liveProject.id,
+                milestoneId: liveMilestone.id,
+                deliverableId: liveDeliverable.id,
+                title: templateTask.title,
+              });
+            }
+          }
+        }
+        // Create mock invoice
+        await db.insert(invoices).values({
+          projectId: liveProject.id,
+          amount: projectValue, // $6,200.00
+          status: "UNPAID",
+        });
 
-  // Attempt to send the welcome email asynchronously
-  try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const magicLink = `${appUrl}/p/${slug}`;
-    if (client.email) {
-      await sendProjectWelcomeEmail(client.email, client.name, project.projectName, magicLink, portalPin);
-    } 
-  } catch (emailError) {
-    console.error("Failed to send welcome email:", emailError);
+        await sendWelcomingEmailToClient(client, slug, liveProject, portalPin);
+
+        revalidatePath("/projects");
+        revalidatePath("/dashboard");
+      });
+    }
+  } else {
+    const [project] = await db
+      .insert(projects)
+      .values({
+        userId,
+        typeId,
+        clientId: client.id,
+        projectName,
+        scopeOfWork,
+        slug,
+        portalPin,
+      })
+      .returning();
+
+    // Create mock invoice
+    await db.insert(invoices).values({
+      projectId: project.id,
+      amount: projectValue, // $6,200.00
+      status: "UNPAID",
+    });
+
+    await sendWelcomingEmailToClient(client, slug, project, portalPin);
+
+    revalidatePath("/projects");
+    revalidatePath("/dashboard");
   }
-
-  revalidatePath("/projects");
-  revalidatePath("/dashboard");
 }
 
 export async function signProject(slug: string, formData: FormData) {
   const clientSignature = formData.get("clientSignature") as string;
 
-  await db.update(projects)
+  await db
+    .update(projects)
     .set({
       clientSignature,
-      status: "COLLECTING_ASSETS"
+      status: "COLLECTING_ASSETS",
     })
     .where(eq(projects.slug, slug));
 
@@ -87,15 +183,16 @@ export async function signProject(slug: string, formData: FormData) {
 
 export async function completeAssetCollection(slug: string) {
   try {
-    await db.update(projects)
-    .set({status: 'IN_PROGRESS'})
-    .where(eq(projects.slug, slug))
+    await db
+      .update(projects)
+      .set({ status: "IN_PROGRESS" })
+      .where(eq(projects.slug, slug));
 
-    revalidatePath(`/p/${slug}`)
-    revalidatePath('/dashboard')
+    revalidatePath(`/p/${slug}`);
+    revalidatePath("/dashboard");
   } catch (error) {
-    console.error('Status update error', error)
-    throw new Error('Failed to update status')
+    console.error("Status update error", error);
+    throw new Error("Failed to update status");
   }
 }
 
@@ -104,19 +201,22 @@ export async function notifyUploadAction(slug: string) {
     const [project] = await db
       .select({
         projectName: projects.projectName,
-        clientName: clients.name
+        clientName: clients.name,
       })
       .from(projects)
       .innerJoin(clients, eq(projects.clientId, clients.id))
-      .where(eq(projects.slug, slug))
+      .where(eq(projects.slug, slug));
 
     if (project) {
-      await sendUploadNotificationEmail(project.clientName, project.projectName)
+      await sendUploadNotificationEmail(
+        project.clientName,
+        project.projectName,
+      );
     }
-    revalidatePath(`/p/${slug}`)
+    revalidatePath(`/p/${slug}`);
   } catch (error) {
-    console.error('Notification error', error)
-    throw new Error('Failed to send notification')
+    console.error("Notification error", error);
+    throw new Error("Failed to send notification");
   }
 }
 
@@ -126,30 +226,42 @@ export async function sendReminderAction(slug: string) {
       .select({
         projectName: projects.projectName,
         clientName: clients.name,
-        clientEmail: clients.email
+        clientEmail: clients.email,
       })
       .from(projects)
       .innerJoin(clients, eq(projects.clientId, clients.id))
-      .where(eq(projects.slug, slug))
+      .where(eq(projects.slug, slug));
 
     if (project && project.clientEmail) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const magicLink = `${appUrl}/p/${slug}`;
-      await sendReminderEmail(project.clientEmail, project.clientName, project.projectName, magicLink);
+      await sendReminderEmail(
+        project.clientEmail,
+        project.clientName,
+        project.projectName,
+        magicLink,
+      );
     }
-    
+
     return { success: true };
   } catch (error) {
-    console.error('Reminder email error', error)
-    throw new Error('Failed to send reminder email')
+    console.error("Reminder email error", error);
+    throw new Error("Failed to send reminder email");
   }
 }
 
-export async function updateProjectStatus(slug: string, status: "AWAITING_SIGNATURE" | "COLLECTING_ASSETS" | "IN_PROGRESS" | "IN_REVIEW" | "DELIVERY" | "COMPLETED") {
-  await db.update(projects)
-    .set({ status })
-    .where(eq(projects.slug, slug));
-  
+export async function updateProjectStatus(
+  slug: string,
+  status:
+    | "AWAITING_SIGNATURE"
+    | "COLLECTING_ASSETS"
+    | "IN_PROGRESS"
+    | "IN_REVIEW"
+    | "DELIVERY"
+    | "COMPLETED",
+) {
+  await db.update(projects).set({ status }).where(eq(projects.slug, slug));
+
   revalidatePath(`/projects`);
   revalidatePath(`/p/${slug}`);
   revalidatePath(`/dashboard`);
@@ -158,11 +270,9 @@ export async function updateProjectStatus(slug: string, status: "AWAITING_SIGNAT
 export async function updateProjectScope(slug: string, scopeOfWork: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
-  
-  await db.update(projects)
-    .set({ scopeOfWork })
-    .where(eq(projects.slug, slug));
-    
+
+  await db.update(projects).set({ scopeOfWork }).where(eq(projects.slug, slug));
+
   revalidatePath(`/projects/${slug}`);
   revalidatePath(`/p/${slug}`);
 }

@@ -12,10 +12,12 @@ import {
   CircleDot,
   Circle,
   MessageSquare,
+  Clock,
 } from "lucide-react";
 import { useState } from "react";
 import { ProjectChat } from "@/components/ProjectChat";
 import { submitDeliverableFeedback } from "@/app/actions/deliverableFeedback";
+import { UploadButton } from "@/utils/uploadthing";
 
 export function Step3Tracker({
   projectId,
@@ -66,7 +68,7 @@ export function Step3Tracker({
       {/* Header Area */}
       <div className="flex items-start justify-between mt-8 mb-8">
         <div className="space-y-1">
-          <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+          <p className="text-xs font-bold text-brand uppercase tracking-wider">
             {projectName}
           </p>
           <h1 className="text-3xl font-bold text-slate-900">Project Status</h1>
@@ -103,7 +105,7 @@ export function Step3Tracker({
         <div className="lg:col-span-3 space-y-8">
           {/* Timeline Status */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
-            <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-indigo-500 before:to-slate-200">
+            <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-brand before:to-slate-200">
               {/* Timeline Item 1 */}
               <div className="relative flex items-start gap-6 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-transparent">
                 <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 z-10 shadow-[0_0_0_4px_white]">
@@ -150,10 +152,10 @@ export function Step3Tracker({
 
               {/* Timeline Item 3 (Active) */}
               <div className="relative flex items-start gap-6">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 z-10 shadow-[0_0_0_4px_white]">
-                  <div className="w-3 h-3 bg-white rounded-full" />
+                <div className="w-10 h-10 rounded-full bg-brand flex items-center justify-center shrink-0 z-10 shadow-[0_0_0_4px_white]">
+                  <Clock className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 -mt-3 shadow-sm">
+                <div className="flex-1 bg-brand/10 border border-brand/20 rounded-xl p-4 -mt-3 shadow-sm">
                   <div className="flex sm:items-center justify-between sm:flex-row gap-2">
                     <div>
                       <h4 className="text-base font-bold text-slate-900">
@@ -163,7 +165,7 @@ export function Step3Tracker({
                         Brand assets, photography, and reference files
                       </p>
                     </div>
-                    <div className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full w-fit shadow-sm">
+                    <div className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-full w-fit shadow-sm">
                       In progress
                     </div>
                   </div>
@@ -285,12 +287,12 @@ export function Step3Tracker({
                           {/* Feedback Form for PENDING preview/files */}
                           {(item.previewUrl || item.fileUrl) &&
                             item.clientStatus === "PENDING" && (
-                              <div className="mt-4 p-4 border border-indigo-100 bg-indigo-50/50 rounded-xl space-y-3">
-                                <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                                  Review Required
+                              <div className="mt-4 p-4 border border-brand/20 bg-brand/10 rounded-xl space-y-3">
+                                <p className="text-xs font-bold text-brand uppercase tracking-wider">
+                                  Provide Feedback / Request Revision
                                 </p>
                                 <textarea
-                                  className="w-full text-sm p-3 rounded-lg border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  className="w-full text-sm p-3 rounded-lg border border-brand/20 focus:outline-none focus:ring-2 focus:ring-brand bg-white"
                                   placeholder="Looks great! / Please change..."
                                   rows={2}
                                   value={feedbackText[item.id] || ""}
@@ -387,7 +389,7 @@ export function Step3Tracker({
                               href={item.fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-bold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-bold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 bg-brand hover:opacity-90 text-white shadow-sm"
                             >
                               <Download className="w-3.5 h-3.5 mr-2" />
                               Download Final
@@ -397,14 +399,14 @@ export function Step3Tracker({
                           <Button
                             disabled
                             size="sm"
-                            className="bg-indigo-600/50 text-white font-bold h-9"
+                            className="bg-brand/50 text-white font-bold h-9"
                           >
                             <Download className="w-3.5 h-3.5 mr-2" />
                             No File Attached
                           </Button>
                         ) : (
                           <span
-                            className={`text-sm ${item.status === "Pending" ? "text-slate-400 font-medium" : "text-indigo-600 font-medium"}`}
+                            className={`text-sm ${item.status === "Pending" ? "text-slate-400 font-medium" : "text-brand font-medium"}`}
                           >
                             {item.status}
                           </span>
@@ -494,10 +496,24 @@ export function Step3Tracker({
           )}
 
           {/* Mini Upload CTA */}
-          <button className="w-full bg-slate-50 border border-slate-200 border-dashed rounded-xl p-4 text-center text-sm font-medium text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-colors flex items-center justify-center gap-2">
-            <Upload className="w-4 h-4 text-slate-400" />
-            Upload more files
-          </button>
+          <div className="w-full bg-slate-50 border border-slate-200 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-colors hover:border-brand/40 hover:bg-brand/5">
+            <UploadButton
+              endpoint="projectAssets"
+              input={{ projectId }}
+              content={{
+                button({ ready }) {
+                  return ready ? "Upload more files" : "Loading...";
+                },
+              }}
+              onClientUploadComplete={() => {
+                window.location.reload();
+              }}
+              onUploadError={(error: Error) => {
+                alert(`ERROR! ${error.message}`);
+              }}
+              className="ut-button:bg-brand ut-button:ut-readying:bg-brand/50 ut-button:ut-uploading:bg-brand/50 ut-label:text-brand"
+            />
+          </div>
         </div>
       </div>
 

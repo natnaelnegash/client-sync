@@ -1,4 +1,9 @@
 import nodemailer from 'nodemailer';
+import { InferSelectModel } from 'drizzle-orm';
+import { clients, projects } from '@/db/schema';
+
+type Client = InferSelectModel<typeof clients>
+type Project = InferSelectModel<typeof projects>
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -152,3 +157,22 @@ export async function sendOverdueInvoiceEmail(clientEmail: string, clientName: s
     html
   });
 }
+
+export async function sendWelcomingEmailToClient(client: Client, slug: string, project: Project, portalPin: string){
+  // Attempt to send the welcome email asynchronously
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const magicLink = `${appUrl}/p/${slug}`;
+      if (client.email) {
+        await sendProjectWelcomeEmail(
+          client.email,
+          client.name,
+          project.projectName,
+          magicLink,
+          portalPin,
+        );
+      }
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
+} 

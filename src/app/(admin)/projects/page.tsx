@@ -17,6 +17,7 @@ import Link from "next/link";
 import { CreateProjectModal } from "../dashboard/components/CreateProjectModal";
 import { formatDistanceToNow } from "date-fns";
 import { getWorkspaceOwnerId } from "@/utils/workspace";
+import { SearchInput } from "@/components/SearchInput";
 
 function getStatusDetails(status: string) {
   switch (status) {
@@ -81,6 +82,8 @@ export default async function ProjectsPage({
 
   const statusFilter =
     typeof resolvedParams.status === "string" ? resolvedParams.status : "all";
+  const searchQuery =
+    typeof resolvedParams.q === "string" ? resolvedParams.q.toLowerCase() : "";
 
   const projectsData = await db
     .select({
@@ -107,7 +110,16 @@ export default async function ProjectsPage({
 
   let filteredProjects = projectsData;
   if (statusFilter !== "all") {
-    filteredProjects = projectsData.filter((p) => p.status === statusFilter);
+    filteredProjects = filteredProjects.filter(
+      (p) => p.status === statusFilter,
+    );
+  }
+  if (searchQuery) {
+    filteredProjects = filteredProjects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchQuery) ||
+        p.clientName?.toLowerCase().includes(searchQuery),
+    );
   }
 
   return (
@@ -126,13 +138,7 @@ export default async function ProjectsPage({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 py-2">
         <div className="flex items-center gap-4 flex-1">
-          <div className="relative w-full max-w-xs shrink-0 flex justify-center">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input
-              placeholder="Search projects..."
-              className="pl-9 h-10 bg-white border-slate-200 focus-visible:ring-indigo-600 rounded-lg text-sm w-full shadow-sm"
-            />
-          </div>
+          <SearchInput placeholder="Search projects..." />
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-hide">
             <Link
               href="?status=all"

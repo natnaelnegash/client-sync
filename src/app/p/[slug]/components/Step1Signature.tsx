@@ -83,7 +83,7 @@ export function Step1Signature({
       {/* THIS WRAPPER WILL BE TURNED INTO A PDF */}
       <div ref={contractRef} className="bg-slate-50 p-6 md:p-10 rounded-2xl">
         <div className="space-y-2 mb-8">
-          <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+          <p className="text-xs font-bold text-brand uppercase tracking-wider">
             Contract with {agencyName}
           </p>
           <h1 className="text-3xl font-bold text-slate-900">{projectName}</h1>
@@ -176,7 +176,7 @@ export function Step1Signature({
                 onChange={(e) => setSignatureText(e.target.value)}
                 placeholder="Type your full name to sign"
                 required
-                className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-indigo-600 rounded-lg text-lg"
+                className="h-12 bg-slate-50 border-slate-200 focus-visible:ring-brand rounded-lg text-lg"
               />
             </div>
 
@@ -187,7 +187,7 @@ export function Step1Signature({
                   required
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-600 cursor-pointer"
+                  className="w-4 h-4 text-brand border-slate-300 rounded focus:ring-brand cursor-pointer"
                 />
               </div>
               <span className="text-sm text-slate-600 leading-snug group-hover:text-slate-900 transition-colors">
@@ -199,7 +199,7 @@ export function Step1Signature({
             <Button
               type="submit"
               disabled={!agreed || loading || !signatureText.trim()}
-              className={`w-full h-12 rounded-xl text-base font-bold shadow-sm transition-all ${agreed && signatureText.trim() ? "bg-indigo-600 hover:bg-indigo-700 text-white" : "bg-indigo-200 text-white cursor-not-allowed"}`}
+              className={`w-full h-12 rounded-xl text-base font-bold shadow-sm transition-all ${agreed && signatureText.trim() ? "bg-brand hover:opacity-90 text-white" : "bg-brand/50 text-white cursor-not-allowed"}`}
             >
               <Shield className="w-4 h-4 mr-2" />
               Accept & Sign Document
@@ -215,8 +215,8 @@ export function Step1Signature({
 
       {loading && (
         <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mb-4"></div>
-          <p className="text-indigo-600 font-bold animate-pulse">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-brand border-t-transparent mb-4"></div>
+          <p className="text-brand font-bold animate-pulse">
             Generating secure PDF contract...
           </p>
         </div>

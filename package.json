@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed-categories": "tsx src/db/seed/seed.ts",
+    "db:seed-templates": "tsx src/db/seed/index.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
     "@base-ui/react": "^1.4.0",
+    "@google/genai": "^2.11.0",
     "@uploadthing/react": "^7.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -50,7 +53,7 @@
     "eslint-config-next": "16.2.4",
     "nanoid": "^5.1.9",
     "tailwindcss": "^4",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   }
 }

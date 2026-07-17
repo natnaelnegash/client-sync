@@ -32,13 +32,14 @@ export async function GET(request: Request) {
     .where(
       and(
         ne(invoices.status, 'PAID'),
-        lt(invoices.dueDate, now.toISOString().split('T')[0]) // Simplified comparison
+        lt(invoices.dueDate, now)
       )
     );
 
     let sentCount = 0;
 
     for (const inv of overdueInvoices) {
+      if (!inv.clientEmail) continue;
       const magicLink = `${appUrl}/p/${inv.projectSlug}?tab=invoices`;
       const formattedAmount = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
       projectName: projects.projectName,
       slug: projects.slug,
       clientName: clients.name,
-      clientEmail: clients?.email
+      clientEmail: clients.email
     })
     .from(projects)
     .innerJoin(clients, eq(projects.clientId, clients.id))
@@ -76,6 +77,7 @@ export async function GET(request: Request) {
     );
 
     for (const proj of stalledProjects) {
+      if (!proj.clientEmail) continue;
       const magicLink = `${appUrl}/p/${proj.slug}`;
       await sendSignatureReminderEmail(
         proj.clientEmail,

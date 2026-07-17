@@ -1,0 +1,1 @@
+ALTER TABLE "project_templates" ADD COLUMN "type" "template_type" DEFAULT 'CUSTOM' NOT NULL;

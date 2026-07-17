@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { files, projects, clients, deliverables, invoices, messages } from "@/db/schema";
+import { files, projects, clients, deliverables, invoices, messages, workspaceSettings } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { PortalHeader } from "./components/PortalHeader";
@@ -19,6 +19,7 @@ export default async function ClientPortalPage({
   const [project] = await db
     .select({
       id: projects.id,
+      userId: projects.userId,
       slug: projects.slug,
       projectName: projects.projectName,
       scopeOfWork: projects.scopeOfWork,
@@ -59,15 +60,27 @@ export default async function ClientPortalPage({
   if (project.status === "COLLECTING_ASSETS") activeStep = 2;
   if (project.status === "IN_PROGRESS" || project.status === "IN_REVIEW" || project.status === "DELIVERY" || project.status === "COMPLETED") activeStep = 3;
 
-  // Assuming agency is "Northlight Studio" for now
-  const agencyName = "Northlight Studio"; 
+  // Fetch workspace settings for white-labeling
+  const [settings] = await db
+    .select()
+    .from(workspaceSettings)
+    .where(eq(workspaceSettings.userId, project.userId));
+
+  const agencyName = settings?.agencyName || "Northlight Studio";
+  const brandAccentColor = settings?.brandAccentColor || "#4F46E5";
+  const brandLogoUrl = settings?.agencyLogoUrl || null;
+  const agencyTagline = settings?.agencyTagline || "We design digital experiences.";
 
   // PIN Authentication Check
   if (project.portalPin) {
     const cookieStore = await cookies();
     const authCookie = cookieStore.get(`client_portal_auth_${project.slug}`);
     if (authCookie?.value !== "authenticated") {
-      return <PinGate projectSlug={project.slug} agencyName={agencyName} />;
+      return (
+        <main className="min-h-screen bg-slate-50/50" style={{ "--brand-primary": brandAccentColor } as React.CSSProperties}>
+          <PinGate projectSlug={project.slug} agencyName={agencyName} brandLogoUrl={brandLogoUrl} brandAccentColor={brandAccentColor} />
+        </main>
+      );
     }
   }
 
@@ -82,10 +95,14 @@ export default async function ClientPortalPage({
     .orderBy(asc(messages.createdAt));
 
   return (
-    <main className="min-h-screen bg-slate-50/50 selection:bg-indigo-100 font-sans">
+    <main 
+      className="min-h-screen bg-slate-50/50 selection:bg-brand/20 font-sans"
+      style={{ "--brand-primary": brandAccentColor } as React.CSSProperties}
+    >
       <PortalHeader 
         clientName={project.clientName} 
-        agencyName={agencyName} 
+        agencyName={agencyName}
+        brandLogoUrl={brandLogoUrl}
         activeStep={activeStep} 
       />
       

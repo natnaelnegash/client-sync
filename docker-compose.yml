@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: clientsync-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: clientsync
+    ports:
+      - "5432:5432"
+    volumes:
+      - clientsync_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d clientsync"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # migrator:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: builder # Use the builder stage which has all node_modules including drizzle-kit
+  #   container_name: clientsync-migrator
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:password@db:5432/clientsync
+  #   command: npx drizzle-kit push
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       NEXT_PUBLIC_PUSHER_KEY: ${NEXT_PUBLIC_PUSHER_KEY}
+  #       NEXT_PUBLIC_PUSHER_CLUSTER: ${NEXT_PUBLIC_PUSHER_CLUSTER}
+  #   container_name: clientsync-app
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:password@db:5432/clientsync
+  #     # We map all other secrets from a local .env file
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     migrator:
+  #       condition: service_completed_successfully
+
+volumes:
+  clientsync_pgdata:
