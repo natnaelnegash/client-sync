@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { projectTemplates, templateMilestones, templateDeliverables, templateTasks, workspaceSettings, projectTypes } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getWorkspaceOwnerId } from "@/utils/workspace";
 import { revalidatePath } from "next/cache";
@@ -127,4 +127,25 @@ export async function deleteTemplateTask(id: string, templateId: string) {
   
   await db.delete(templateTasks).where(eq(templateTasks.id, id));
   revalidatePath(`/templates/${templateId}`);
+}
+
+export async function getTemplates() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return [];
+  
+  const systemTemplates = await db
+      .select()
+      .from(projectTemplates)
+      .where(eq(projectTemplates.type, "SYSTEM"))
+      .orderBy(desc(projectTemplates.createdAt));
+  
+    const customTemplates = await db
+      .select()
+      .from(projectTemplates)
+      .where(eq(projectTemplates.userId, userId))
+      .orderBy(desc(projectTemplates.createdAt));
+  
+    const templates = [...systemTemplates, ...customTemplates];
+    return templates
 }

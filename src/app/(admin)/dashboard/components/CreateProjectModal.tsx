@@ -38,6 +38,7 @@ export function CreateProjectModal({
   const [depositEnabled, setDepositEnabled] = useState(true);
   const [depositPercent, setDepositPercent] = useState<number | null>(50);
   const [clients, setClients] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
 
   const [scopeText, setScopeText] = useState("");
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -70,9 +71,11 @@ export function CreateProjectModal({
     setIsEnhancing(true);
     try {
       // Find the project name input to pass as context
-      const projectNameInput = document.getElementById("projectName") as HTMLInputElement;
+      const projectNameInput = document.getElementById(
+        "projectName",
+      ) as HTMLInputElement;
       const projectName = projectNameInput?.value || "Untitled Project";
-      
+
       const enhancedText = await enhanceScopeOfWork(scopeText, projectName);
       setScopeText(enhancedText || "");
     } catch (error: any) {
@@ -87,6 +90,9 @@ export function CreateProjectModal({
       import("@/app/actions/client")
         .then((m) => m.getClients())
         .then(setClients);
+      import("@/app/actions/template")
+        .then((temp) => temp.getTemplates())
+        .then(setTemplates);
     }
   }, [open]);
 
@@ -95,23 +101,26 @@ export function CreateProjectModal({
       <DialogTrigger
         render={
           triggerVariant === "default" ? (
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-6 rounded-lg shadow-sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
-          </Button>
-        ) : (
-          <button className="w-full flex items-start gap-4 text-left group">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
-              <Plus className="w-5 h-5 text-slate-600 group-hover:text-indigo-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors text-sm">
-                Create new project
-              </p>
-              <p className="text-sm text-slate-500">Set up scope & proposal</p>
-            </div>
-          </button>
-        )}
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-6 rounded-lg shadow-sm">
+              <Plus className="w-4 h-4 mr-2" />
+              New Project
+            </Button>
+          ) : (
+            <button className="w-full flex items-start gap-4 text-left group">
+              <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
+                <Plus className="w-5 h-5 text-slate-600 group-hover:text-indigo-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors text-sm">
+                  Create new project
+                </p>
+                <p className="text-sm text-slate-500">
+                  Set up scope & proposal
+                </p>
+              </div>
+            </button>
+          )
+        }
       />
 
       <DialogContent className="sm:max-w-[640px] p-0 overflow-hidden bg-white border-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] !rounded-2xl">
@@ -189,6 +198,23 @@ export function CreateProjectModal({
               />
             </div>
 
+            {/* Project Type */}
+            <div className="space-y-3">
+              <Label
+                htmlFor="projectType"
+                className="text-base font-bold text-slate-900"
+              >
+                Project Type <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="projectType"
+                name="projectType"
+                placeholder="Web Design"
+                className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-600 text-base shadow-sm"
+                required
+              />
+            </div>
+
             {/* Scope of Work */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -231,7 +257,11 @@ export function CreateProjectModal({
                     disabled={isEnhancing}
                     className="flex items-center gap-2 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    {isEnhancing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                    {isEnhancing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-3.5 h-3.5" />
+                    )}
                     {isEnhancing ? "Enhancing..." : "Enhance"}
                   </button>
                 </div>
