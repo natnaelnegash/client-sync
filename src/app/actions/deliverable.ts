@@ -24,7 +24,7 @@ export async function addDeliverable(projectId: string, formData: FormData) {
   revalidatePath(`/projects`);
 }
 
-export async function updateDeliverableStatus(id: string, status: "Pending" | "In progress..." | "Complete", fileUrl?: string, previewUrl?: string) {
+export async function updateDeliverableStatus(id: string, status: "Pending" | "In progress..." | "Complete", fileUrl?: string | null, previewUrl?: string | null) {
   await db.update(deliverables)
     .set({ 
       status,

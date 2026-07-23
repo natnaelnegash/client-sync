@@ -67,7 +67,10 @@ export function Step1Signature({
         );
 
         // 4. Upload to UploadThing
-        await startUpload([file], { projectId });
+        const upload = await startUpload([file], { projectId });
+        if (!upload?.length) {
+          throw new Error("Upload wasn't successful");
+        }
       }
 
       // 5. Submit the signature to the database to advance the stage

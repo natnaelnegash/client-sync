@@ -32,7 +32,7 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
         return { url: file.ufsUrl }
     }),
-    contractUpload: f({ pdf: {maxFileSize: '4MB'} })
+    contractUpload: f({ pdf: {maxFileSize: '16MB'} })
     .input(z.object({projectId: z.string()}))
     .middleware(async ({input}) => {
         return {projectId: input.projectId}

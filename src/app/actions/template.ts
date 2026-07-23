@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getWorkspaceOwnerId } from "@/utils/workspace";
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 
 export async function createTemplate(formData: FormData) {
   const session = await auth();
@@ -146,6 +147,33 @@ export async function getTemplates() {
       .where(eq(projectTemplates.userId, userId))
       .orderBy(desc(projectTemplates.createdAt));
   
-    const templates = [...systemTemplates, ...customTemplates];
-    return templates
+    return [...systemTemplates, ...customTemplates];
+}
+
+export async function getTemplatesById(tempId: string) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return [];
+  
+  const systemTemplates = await db
+      .select()
+      .from(projectTemplates)
+      .where(eq(projectTemplates.type, "SYSTEM"))
+      .orderBy(desc(projectTemplates.createdAt));
+  
+  const customTemplates = await db
+    .select()
+    .from(projectTemplates)
+    .where(eq(projectTemplates.userId, userId))
+    .orderBy(desc(projectTemplates.createdAt));
+
+    const allTemplates = [...systemTemplates, ...customTemplates]
+
+    const template = allTemplates.filter((temp) => temp.id === tempId)
+    if (template) {
+      return template
+    } else {
+      notFound()
+    }
+     
 }

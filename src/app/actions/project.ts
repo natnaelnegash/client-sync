@@ -26,8 +26,9 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
+import { getTemplatesById } from "./template";
 
-export async function createProject(formData: FormData) {
+export async function createProject(formData: FormData, sourceTemplateId: string | null) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthorized");
@@ -37,19 +38,10 @@ export async function createProject(formData: FormData) {
   const scopeOfWork = formData.get("scopeOfWork") as string;
   const projectValue = Number(formData.get("projectInvoiceAmount"));
   const projectType = formData.get("projectType") as string;
-  const sourceTemplateId = "01a566f2-49fa-425b-9922-447f8aeefe3b";
 
   const slug = `${clientName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${nanoid(6)}`;
   // Generate a random 4-digit PIN
   const portalPin = Math.floor(1000 + Math.random() * 9000).toString();
-
-  const [type] = await db
-    .select()
-    .from(projectTypes)
-    .where(eq(projectTypes.name, projectType));
-  if (!type) throw new Error("Project type not found");
-
-  const typeId = type.id;
 
   let [client] = await db
     .select()
@@ -86,7 +78,7 @@ export async function createProject(formData: FormData) {
           .insert(projects)
           .values({
             userId,
-            typeId,
+            typeId: sourceTemplate.typeId,
             clientId: client.id,
             projectName,
             scopeOfWork,
@@ -127,7 +119,7 @@ export async function createProject(formData: FormData) {
           }
         }
         // Create mock invoice
-        await db.insert(invoices).values({
+        await tx.insert(invoices).values({
           projectId: liveProject.id,
           amount: projectValue, // $6,200.00
           status: "UNPAID",
@@ -140,6 +132,7 @@ export async function createProject(formData: FormData) {
       });
     }
   } else {
+    const typeId = await getProjectTypeId(projectType);
     const [project] = await db
       .insert(projects)
       .values({
@@ -275,4 +268,12 @@ export async function updateProjectScope(slug: string, scopeOfWork: string) {
 
   revalidatePath(`/projects/${slug}`);
   revalidatePath(`/p/${slug}`);
+}
+export async function getProjectTypeId(projectType: string){
+  const [type] = await db
+        .select()
+        .from(projectTypes)
+        .where(eq(projectTypes.name, projectType));
+  if (!type) throw new Error("Project type not found");
+  return type.id
 }
