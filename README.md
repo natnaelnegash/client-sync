@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.imgur.com/K3wYV1d.png" alt="ClientSync Logo" width="120" />
+  <img src="/public/clientsync-landing.png" alt="ClientSync Logo" width="120" />
   <h1>ClientSync ⚡</h1>
   <p><strong>The Ultimate Client Portal & Project Management OS for Freelancers and Agencies</strong></p>
   
@@ -23,9 +23,9 @@
 - **🚀 Instant Client Portals:** Spin up a dedicated client portal with a unique URL (`/p/[slug]`) in seconds.
 - **🔐 Secure Access:** Magic links and 4-digit PIN codes ensure clients easily and securely access their workspace without needing to remember complex passwords.
 - **📅 Visual Timeline:** Clients can see exactly what stage their project is at (Awaiting Signature, Collecting Assets, In Progress, In Review, Delivery, Completed).
-- **📂 Deliverables & Feedback:** 
+- **📂 Deliverables & Feedback:**
   - Upload previews and final deliverables.
-  - Require payments *before* high-res final files can be downloaded (Payment-gated deliverables).
+  - Require payments _before_ high-res final files can be downloaded (Payment-gated deliverables).
   - Built-in feedback loop (Clients can "Approve" or "Request Revisions" directly on the deliverable).
 - **💳 Built-in Invoicing:** Create invoices (e.g., 50% deposit, milestone payments) and track paid/unpaid statuses seamlessly.
 - **💬 Real-Time Chat:** Integrated Pusher-powered live chat right inside the portal so you can discuss feedback synchronously without leaving the app.
@@ -58,18 +58,21 @@ ClientSync is built using cutting-edge web technologies to ensure a scalable, fa
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/yourusername/client-sync.git
    cd client-sync
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables:**
    Create a `.env.local` file in the root directory and add the following keys:
+
    ```env
    # Database
    DATABASE_URL="postgres://user:pass@host:5432/db"
@@ -92,6 +95,7 @@ ClientSync is built using cutting-edge web technologies to ensure a scalable, fa
    ```
 
 4. **Initialize the database:**
+
    ```bash
    npm run db:push
    # or
@@ -99,6 +103,7 @@ ClientSync is built using cutting-edge web technologies to ensure a scalable, fa
    ```
 
 5. **Run the development server:**
+
    ```bash
    npm run dev
    ```
@@ -107,7 +112,7 @@ ClientSync is built using cutting-edge web technologies to ensure a scalable, fa
 
 ## 📸 Screenshots
 
-*(Add some amazing screenshots of the dashboard, the magic link login, the client portal grid view, and the chat interface here to make the README pop!)*
+_(Add some amazing screenshots of the dashboard, the magic link login, the client portal grid view, and the chat interface here to make the README pop!)_
 
 ## 🤝 Contributing
 
@@ -124,6 +129,7 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
+
 <div align="center">
   <p>Built with ❤️ by a developer who hates chasing clients for payments.</p>
 </div>
