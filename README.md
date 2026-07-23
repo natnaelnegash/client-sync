@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/public/clientsync-landing.png" alt="ClientSync Logo" width="120" />
+  <img src="/public/clientsync-landing.png" alt="ClientSync Logo" width="full" />
   <h1>ClientSync ⚡</h1>
   <p><strong>The Ultimate Client Portal & Project Management OS for Freelancers and Agencies</strong></p>
   
