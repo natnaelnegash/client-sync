@@ -1,6 +1,6 @@
 "use client";
 
-import { createProject } from "@/app/actions/project";
+// Legacy component — no longer used. The CreateProjectModal has replaced this.
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,7 +27,7 @@ export function CreateProjectForm() {
         <form
           action={async (data) => {
             setLoading(true);
-            await createProject(data);
+            // Legacy: this form is no longer functional
             setLoading(false);
           }}
           className="space-y-4"

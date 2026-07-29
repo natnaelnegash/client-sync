@@ -2,11 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
-  Send,
   MoreHorizontal,
-  CheckCircle2,
-  CircleDot,
-  Circle,
 } from "lucide-react";
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
@@ -16,8 +12,11 @@ import {
   clients,
   invoices,
   files,
+  milestones,
   deliverables,
+  tasks,
   messages,
+  deliverableTypes,
 } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { format } from "date-fns";
@@ -52,6 +51,31 @@ export default async function ProjectAdminDetailPage({
   const project = projectQuery[0].projects;
   const client = projectQuery[0].clients;
 
+  // Fetch the full milestone hierarchy using relational queries
+  const projectMilestones = await db.query.milestones.findMany({
+    where: eq(milestones.projectId, project.id),
+    orderBy: [asc(milestones.order)],
+    with: {
+      deliverables: {
+        orderBy: [asc(deliverables.order)],
+      },
+      tasks: {
+        orderBy: [asc(tasks.order)],
+      },
+    },
+  });
+
+  // Fetch unattached deliverables (those without a milestone)
+  const looseDeliverables = await db
+    .select()
+    .from(deliverables)
+    .where(
+      and(
+        eq(deliverables.projectId, project.id),
+        // milestoneId is null
+      )
+    );
+
   // Fetch invoices to calculate value
   const projectInvoices = await db
     .select()
@@ -69,13 +93,6 @@ export default async function ProjectAdminDetailPage({
     .select()
     .from(files)
     .where(eq(files.projectId, project.id));
-  const fileCount = projectFilesQuery.length;
-
-  // Fetch deliverables
-  const projectDeliverables = await db
-    .select()
-    .from(deliverables)
-    .where(eq(deliverables.projectId, project.id));
 
   // Fetch messages
   const initialMessages = await db
@@ -83,6 +100,9 @@ export default async function ProjectAdminDetailPage({
     .from(messages)
     .where(eq(messages.projectId, project.id))
     .orderBy(asc(messages.createdAt));
+
+  // Fetch deliverable types for the add deliverable form
+  const allDeliverableTypes = await db.select().from(deliverableTypes);
 
   const valueFormatted = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -107,7 +127,7 @@ export default async function ProjectAdminDetailPage({
       .join(" ");
   };
 
-  // Progress logic
+  // Progress logic for the project-level status badge
   const statuses = [
     "AWAITING_SIGNATURE",
     "COLLECTING_ASSETS",
@@ -182,9 +202,10 @@ export default async function ProjectAdminDetailPage({
             currentIndex={currentIndex}
             scopeOfWork={project.scopeOfWork}
             uploadedFiles={projectFilesQuery}
-            deliverables={projectDeliverables}
+            milestones={projectMilestones}
             invoices={projectInvoices}
             initialMessages={initialMessages}
+            deliverableTypes={allDeliverableTypes}
           />
         </div>
 

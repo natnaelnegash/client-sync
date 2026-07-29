@@ -8,18 +8,31 @@ import { revalidatePath } from "next/cache";
 export async function addDeliverable(projectId: string, formData: FormData) {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
+  const milestoneId = formData.get("milestoneId") as string | null;
+  const typeId = formData.get("typeId") as string;
   const invoiceId = formData.get("invoiceId") as string | null;
   const requiresPayment = formData.get("requiresPayment") === "true";
   
   if (!title) throw new Error("Title is required");
+  if (!typeId) throw new Error("Deliverable type is required");
 
   await db.insert(deliverables).values({
     projectId,
+    milestoneId: milestoneId || null,
+    typeId,
     title,
     description: description || null,
     invoiceId: invoiceId || null,
     requiresPayment,
   });
+
+  revalidatePath(`/projects`);
+}
+
+export async function updateDeliverableInvoice(deliverableId: string, invoiceId: string | null) {
+  await db.update(deliverables).set({
+    invoiceId: invoiceId || null,
+  }).where(eq(deliverables.id, deliverableId));
 
   revalidatePath(`/projects`);
 }

@@ -9,7 +9,7 @@ import { signProject } from "@/app/actions/project";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { format } from "date-fns";
-import { toPng } from "html-to-image";
+import { toJpeg, toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { useUploadThing } from "@/utils/uploadthing";
 
@@ -46,7 +46,10 @@ export function Step1Signature({
 
       if (contractRef.current) {
         // 2. Take a snapshot of the contract div
-        const imgData = await toPng(contractRef.current, { pixelRatio: 2 });
+        const imgData = await toJpeg(contractRef.current, {
+          pixelRatio: 1.5,
+          quality: 0.75,
+        });
 
         // 3. Create a PDF
         // Get natural dimensions of the node
@@ -58,7 +61,7 @@ export function Step1Signature({
           unit: "px",
           format: [width, height],
         });
-        pdf.addImage(imgData, "PNG", 0, 0, width, height);
+        pdf.addImage(imgData, "JPG", 0, 0, width, height);
         const pdfBlob = pdf.output("blob");
         const file = new File(
           [pdfBlob],

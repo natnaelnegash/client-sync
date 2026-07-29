@@ -5,8 +5,8 @@ import { ecommerceTemplate } from "./ecommerce";
 import { marketingTemplate } from "./marketing";
 import { mobileAppTemplate } from "./mobile";
 import { photographyTemplate } from "./photography";
-import { videoProductionTemplate } from "./video";
-import { corporateWebsiteTemplate } from "./corporate";
+import { videoProductionTemplate } from "./video_editing";
+import { corporateWebsiteTemplate } from "./website";
 
 export const projectTemplates = [
   brandingTemplate,

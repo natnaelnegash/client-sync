@@ -40,6 +40,7 @@ export function Step3Tracker({
   const [feedbackText, setFeedbackText] = useState<{ [key: string]: string }>(
     {},
   );
+  console.log(contractFileUrl);
 
   const handlePayment = async (invoiceId: string) => {
     try {
@@ -83,7 +84,7 @@ export function Step3Tracker({
               href={contractFileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center justify-center whitespace-nowrap rounded-xl h-10 px-4 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+              className="sm:flex items-center justify-center whitespace-nowrap rounded-xl h-10 px-4 text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
             >
               <Download className="w-4 h-4 mr-2" />
               Download Contract

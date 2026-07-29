@@ -198,7 +198,7 @@ export function CreateProjectModal({
           </div>
 
           {/* Hidden inputs to preserve data across steps or submit correctly */}
-          <input type="hidden" name="templateId" value={selectedTemplateId} />
+          <input type="hidden" name="templateId" value={selectedTemplateId ?? ""} />
 
           {/* Body (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-6 bg-white scrollbar-thin scrollbar-thumb-slate-200">
